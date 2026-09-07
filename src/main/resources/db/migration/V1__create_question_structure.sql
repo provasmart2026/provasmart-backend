@@ -1,24 +1,14 @@
 CREATE
 EXTENSION IF NOT EXISTS pgcrypto;
 
-CREATE TABLE exam_areas
-(
-    id   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name VARCHAR(100) NOT NULL UNIQUE
-);
-
 CREATE TABLE disciplines
 (
     id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name         VARCHAR(100) NOT NULL,
-    exam_area_id UUID         NOT NULL,
-
-    CONSTRAINT fk_discipline_exam_area
-        FOREIGN KEY (exam_area_id)
-            REFERENCES exam_areas (id),
+    exam_area    VARCHAR(50)  NOT NULL,
 
     CONSTRAINT uk_discipline_name_area
-        UNIQUE (name, exam_area_id)
+        UNIQUE (name, exam_area)
 );
 
 CREATE TABLE subjects

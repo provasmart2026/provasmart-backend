@@ -1,5 +1,6 @@
 package br.com.provasmart.api.service.impl;
 
+import br.com.provasmart.api.domain.enums.ExamAreaEnum;
 import br.com.provasmart.api.domain.entity.questions.DisciplineEntity;
 import br.com.provasmart.api.dto.response.question.DisciplineResponseDTO;
 import br.com.provasmart.api.mapper.question.IDisciplineMapper;
@@ -21,9 +22,9 @@ public class DisciplineService implements IDisciplineService {
     private final IDisciplineMapper disciplineMapper;
 
     @Override
-    public List<DisciplineResponseDTO> findAllByExamArea(UUID examAreaId) {
-        log.info("Finding all disciplines by exam area id: {}", examAreaId);
-        var disciplines = getAllByExamArea(examAreaId);
+    public List<DisciplineResponseDTO> findAllByExamArea(ExamAreaEnum examArea) {
+        log.info("Finding all disciplines by exam area: {}", examArea);
+        var disciplines = getAllByExamArea(examArea);
         return getList(disciplines);
     }
 
@@ -45,9 +46,9 @@ public class DisciplineService implements IDisciplineService {
                 .toList();
     }
 
-    private List<DisciplineEntity> getAllByExamArea(UUID examAreaId) {
+    private List<DisciplineEntity> getAllByExamArea(ExamAreaEnum examArea) {
         return disciplineRepository
-                .findAllByExamArea_IdOrderByNameAsc(examAreaId);
+                .findAllByExamAreaOrderByNameAsc(examArea);
     }
 
 }

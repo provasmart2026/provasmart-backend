@@ -1,5 +1,6 @@
 package br.com.provasmart.api.dto.response.question;
 
+import br.com.provasmart.api.domain.enums.ExamAreaEnum;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.UUID;
@@ -10,6 +11,9 @@ public record DisciplineResponseDTO(
         UUID id,
 
         @Schema(description = "Nome da disciplina", example = "Matemática")
-        String name
+        String name,
+
+        @Schema(description = "Área do ENEM", example = "MATEMATICA")
+        ExamAreaEnum examArea
 ) {
 }
