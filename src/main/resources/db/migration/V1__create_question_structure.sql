@@ -39,11 +39,11 @@ CREATE TABLE questions
 (
     id          UUID PRIMARY KEY   DEFAULT gen_random_uuid(),
     statement   TEXT      NOT NULL,
-    explanation TEXT,
+    explanation TEXT      NOT NULL,
     subject_id  UUID      NOT NULL,
-    active      BOOLEAN   NOT NULL DEFAULT TRUE,
-    created_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    active      BOOLEAN   NOT NULL,
+    created_at  TIMESTAMP NOT NULL,
+    updated_at  TIMESTAMP,
 
     CONSTRAINT fk_question_subject
         FOREIGN KEY (subject_id)
@@ -52,11 +52,11 @@ CREATE TABLE questions
 
 CREATE TABLE alternatives
 (
-    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    question_id UUID    NOT NULL,
-    letter      CHAR(1) NOT NULL,
-    text        TEXT    NOT NULL,
-    correct     BOOLEAN NOT NULL DEFAULT FALSE,
+    id          UUID PRIMARY KEY    DEFAULT gen_random_uuid(),
+    question_id UUID       NOT NULL,
+    letter      VARCHAR(1) NOT NULL,
+    text        TEXT       NOT NULL,
+    correct     BOOLEAN    NOT NULL,
 
     CONSTRAINT fk_alternative_question
         FOREIGN KEY (question_id)
