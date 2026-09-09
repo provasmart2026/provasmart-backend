@@ -23,25 +23,25 @@ public class QuestionEntity {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(nullable = false, columnDefinition = "TEXT")
+    @Column(name = "statement", nullable = false, columnDefinition = "TEXT")
     private String statement;
 
-    @Column(nullable = false, columnDefinition = "TEXT")
+    @Column(name = "explanation", nullable = false, columnDefinition = "TEXT")
     private String explanation;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "subject_id", nullable = false)
     private SubjectEntity subject;
 
-    @Column(nullable = false)
+    @Column(name = "active", nullable = false)
     private boolean active;
 
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<AlternativeEntity> alternatives = new ArrayList<>();
 
-    @Column(nullable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column
+    @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 }

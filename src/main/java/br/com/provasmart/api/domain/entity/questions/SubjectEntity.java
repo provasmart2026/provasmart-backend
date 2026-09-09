@@ -20,7 +20,7 @@ public class SubjectEntity {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(nullable = false, length = 150)
+    @Column(name = "name", nullable = false, length = 150)
     private String name;
 
     @ManyToOne(fetch = FetchType.LAZY)

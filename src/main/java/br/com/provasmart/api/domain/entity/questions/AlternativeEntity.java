@@ -24,12 +24,12 @@ public class AlternativeEntity {
     @JoinColumn(name = "question_id", nullable = false)
     private QuestionEntity question;
 
-    @Column(nullable = false, length = 1)
+    @Column(name = "letter", nullable = false, length = 1)
     private String letter;
 
-    @Column(nullable = false, columnDefinition = "TEXT")
+    @Column(name = "text", nullable = false, columnDefinition = "TEXT")
     private String text;
 
-    @Column(nullable = false)
+    @Column(name = "correct", nullable = false)
     private boolean correct;
 }
