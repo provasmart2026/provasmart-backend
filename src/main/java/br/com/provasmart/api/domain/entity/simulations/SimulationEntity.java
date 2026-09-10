@@ -9,6 +9,7 @@ import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Getter
@@ -24,16 +25,16 @@ public class SimulationEntity {
     private UUID id;
 
     @Column(name = "student_id", nullable = false, updatable = false)
-    private UUID studentID;
+    private UUID studentId;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false, updatable = false)
+    @Column(name = "status", nullable = false)
     private SimulationStatusEnum status;
 
     @Column(name = "started_at", nullable = false, updatable = false)
     private LocalDateTime startedAt;
 
-    @Column(name = "finished_at", updatable = false)
+    @Column(name = "finished_at")
     private LocalDateTime finishedAt;
 
     @OneToMany(mappedBy = "simulation", cascade = CascadeType.ALL, orphanRemoval = true)

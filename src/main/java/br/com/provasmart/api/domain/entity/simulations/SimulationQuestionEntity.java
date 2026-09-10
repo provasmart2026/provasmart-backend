@@ -22,7 +22,7 @@ public class SimulationQuestionEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID uuid;
+    private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "simulation_id", nullable = false)
@@ -34,5 +34,8 @@ public class SimulationQuestionEntity {
 
     @Column(name = "position", nullable = false)
     private Integer position;
+
+    @OneToOne(mappedBy = "simulationQuestion", cascade = CascadeType.ALL, orphanRemoval = true)
+    private SimulationAnswerEntity answer;
 
 }
