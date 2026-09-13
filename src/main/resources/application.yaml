@@ -1,6 +1,8 @@
 spring:
   application:
     name: api
+    cors:
+      allowed-origins: ${CORS_ORIGIN}
 
   datasource:
     url: ${DB_URL}
