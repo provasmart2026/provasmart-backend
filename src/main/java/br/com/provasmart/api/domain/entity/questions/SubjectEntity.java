@@ -23,7 +23,7 @@ public class SubjectEntity {
     @Column(name = "name", nullable = false, length = 150)
     private String name;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "discipline_id", nullable = false)
     private DisciplineEntity discipline;
 }
