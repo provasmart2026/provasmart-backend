@@ -1,34 +1,3 @@
-584e41b7-b427-433b-8877-648b45beb654.png
-
-c6cc4acb-45e7-48a8-834c-1c0cae8c88ed.png
-
-2e66cf76-a2b8-4ff9-ab7a-2a6ef070749e.png
-
-Texto colado(10).txt
-Documento
-o retorno
-
-Sim. O README atual já ficou desatualizado em alguns pontos importantes: ainda diz que o projeto está em fase inicial, fala que o código Spring Boot ainda não foi adicionado e mantém tecnologias/recursos como “planejados”, embora o backend já tenha Banco de Questões e Simulado Geral implementados.
-
-Eu ajustaria principalmente estas partes:
-
-    remover a frase de “fase inicial”;
-
-    trocar “Tecnologias planejadas” por “Tecnologias utilizadas”;
-
-    atualizar “Entidades previstas” para refletir o que já existe;
-
-    atualizar “Recursos da API” mostrando o que está concluído;
-
-    corrigir “Como executar”, porque o projeto Spring Boot já existe e usa Maven;
-
-    corrigir a URL de clone, que ainda aponta para weblyne/provasmart-backend;
-
-    separar claramente Concluído, Em desenvolvimento e Planejado;
-
-    incluir as duas features concluídas: Banco de Questões e Simulado Geral.
-
-Eu deixaria o README assim:
 
 # ProvaSmart — Backend
 
