@@ -37,6 +37,6 @@ public class SimulationEntity {
     @Column(name = "finished_at")
     private LocalDateTime finishedAt;
 
-    @OneToMany(mappedBy = "simulation", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "simulation", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<SimulationQuestionEntity> questions = new ArrayList<>();
 }

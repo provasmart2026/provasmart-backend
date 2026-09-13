@@ -29,14 +29,14 @@ public class QuestionEntity {
     @Column(name = "explanation", nullable = false, columnDefinition = "TEXT")
     private String explanation;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "subject_id", nullable = false)
     private SubjectEntity subject;
 
     @Column(name = "active", nullable = false)
     private boolean active;
 
-    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<AlternativeEntity> alternatives = new ArrayList<>();
 
     @Column(name = "created_at", nullable = false, updatable = false)

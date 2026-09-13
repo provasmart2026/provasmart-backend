@@ -17,16 +17,12 @@ import java.util.UUID;
 public interface IQuestionRepository extends JpaRepository<QuestionEntity, UUID> {
 
     @Override
-    @EntityGraph(attributePaths = {"subject", "alternatives"})
     Page<QuestionEntity> findAll(Pageable pageable);
 
-    @EntityGraph(attributePaths = {"subject", "alternatives"})
     Page<QuestionEntity> findAllByActiveTrue(Pageable pageable);
 
-    @EntityGraph(attributePaths = {"subject", "alternatives"})
     Optional<QuestionEntity> findOneById(UUID id);
 
-    @EntityGraph(attributePaths = {"subject", "subject.discipline", "alternatives"})
     List<QuestionEntity> findAllByActiveTrueAndSubjectDisciplineExamArea (ExamAreaEnum examArea);
 
 }

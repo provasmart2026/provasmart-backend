@@ -23,11 +23,11 @@ public class SimulationAnswerEntity {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "simulation_question_id", nullable = false)
     private SimulationQuestionEntity simulationQuestion;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "selected_alternative_id", nullable = false)
     private AlternativeEntity selectedAlternative;
 

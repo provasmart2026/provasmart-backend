@@ -24,18 +24,18 @@ public class SimulationQuestionEntity {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "simulation_id", nullable = false)
     private SimulationEntity simulation;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "question_id", nullable = false)
     private QuestionEntity question;
 
     @Column(name = "position", nullable = false)
     private Integer position;
 
-    @OneToOne(mappedBy = "simulationQuestion", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToOne(mappedBy = "simulationQuestion", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private SimulationAnswerEntity answer;
 
 }
