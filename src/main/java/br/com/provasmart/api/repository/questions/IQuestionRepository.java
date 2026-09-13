@@ -16,8 +16,8 @@ import java.util.UUID;
 @Repository
 public interface IQuestionRepository extends JpaRepository<QuestionEntity, UUID> {
 
-    @Override
-    Page<QuestionEntity> findAll(Pageable pageable);
+
+    Page<QuestionEntity> findAllByOrderByActiveDesc(Pageable pageable);
 
     Page<QuestionEntity> findAllByActiveTrue(Pageable pageable);
 

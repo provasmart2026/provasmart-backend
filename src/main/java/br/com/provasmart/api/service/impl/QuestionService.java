@@ -85,7 +85,7 @@ public class QuestionService implements IQuestionService {
     @Override
     public Page<QuestionResponseDTO> findAll(Pageable pageable) {
         log.info("Finding all questions with pageable: {}", pageable);
-        return questionRepository.findAll(pageable).map(this::mapToDTO);
+        return questionRepository.findAllByOrderByActiveDesc(pageable).map(this::mapToDTO);
     }
 
     @Override
