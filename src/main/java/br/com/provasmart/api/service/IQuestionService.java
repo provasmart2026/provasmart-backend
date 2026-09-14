@@ -9,13 +9,13 @@ import java.util.UUID;
 
 public interface IQuestionService {
 
-    QuestionResponseDTO create(QuestionRequestDTO requestDTO);
+    QuestionResponseDTO createQuestion(QuestionRequestDTO requestDTO);
 
-    QuestionResponseDTO update(UUID id, QuestionRequestDTO requestDTO);
+    QuestionResponseDTO updateQuestion(UUID id, QuestionRequestDTO requestDTO);
 
-    void deactivate(UUID id);
+    void desactiveQuestion(UUID id);
 
-    void activate(UUID id);
+    void actovateQuestion(UUID id);
 
     QuestionResponseDTO findById(UUID id);
 

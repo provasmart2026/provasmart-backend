@@ -22,7 +22,7 @@ public class QuestionController {
 
     @PostMapping
     public ResponseEntity<QuestionResponseDTO> create(@RequestBody @Valid QuestionRequestDTO requestDTO) {
-        var question = questionService.create(requestDTO);
+        var question = questionService.createQuestion(requestDTO);
         var location = URI.create("/questions/" + question.id());
         return ResponseEntity.created(location).body(question);
     }
@@ -30,19 +30,19 @@ public class QuestionController {
     @PutMapping("/{id}")
     public ResponseEntity<QuestionResponseDTO> update(@PathVariable UUID id,
                                                       @RequestBody @Valid QuestionRequestDTO requestDTO) {
-        var question = questionService.update(id, requestDTO);
+        var question = questionService.updateQuestion(id, requestDTO);
         return ResponseEntity.ok(question);
     }
 
     @PatchMapping("/{id}/deactivate")
     public ResponseEntity<Void> deactivate(@PathVariable UUID id) {
-        questionService.deactivate(id);
+        questionService.desactiveQuestion(id);
         return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{id}/activate")
     public ResponseEntity<Void> activate(@PathVariable UUID id) {
-        questionService.activate(id);
+        questionService.actovateQuestion(id);
         return ResponseEntity.noContent().build();
     }
 
