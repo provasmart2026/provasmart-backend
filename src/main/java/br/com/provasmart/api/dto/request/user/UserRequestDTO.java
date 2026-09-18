@@ -1,25 +1,30 @@
 package br.com.provasmart.api.dto.request.user;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
+@Schema(description = "DTO para requisição de criação de usuário")
 public record UserRequestDTO(
-        @NotBlank @Size(max = 150) String name,
-        @NotBlank @Email @Size(max = 254) String email,
+
+        @NotBlank( message = "o nome do usuário não pode ser vazio")
+        @Size(max = 150)
+        @Schema(description = "Nome do usuário", example = "João da Silva")
+        String name,
+
+        @NotBlank
+        @Email
+        @Size(max = 255)
+        @Schema(description = "Email do usuário", example = "joao.silva@example.com")
+        String email,
+
         @NotBlank
         @Size(min = 8, message = "a senha deve ter pelo menos 8 caracteres")
-        @Pattern(
-                regexp = "(?s)(?=.*\\p{Lu})(?=.*\\p{Ll})(?=.*\\p{Nd})(?=.*[\\p{P}\\p{S}]).*",
-                message = "a senha deve conter maiúscula, minúscula, número e caractere especial"
-        )
-        @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+        @Pattern(regexp = "^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[^A-Za-z0-9]).+$",
+                message = "A senha deve possuir letra maiúscula, letra minúscula, número e caractere especial")
+        @Schema(description = "Senha do usuário", example = "Senha123!")
         String password
 ) {
-    @Override
-    public String toString() {
-        return "UserRequestDTO[protected]";
-    }
 }
