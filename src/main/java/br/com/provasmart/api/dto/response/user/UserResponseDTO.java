@@ -18,11 +18,23 @@ public record UserResponseDTO(
         @Schema(description = "Email do usuário", example = "joao.silva@example.com")
         String email,
 
-        @Schema(description = "Cargo do usuário", example = "ADMIN")
+        @Schema(description = "Perfil de acesso do usuário", example = "ESTUDANTE")
         RoleEnum role,
 
         @Schema(description = "Indica se o usuário está ativo", example = "true")
         boolean active,
+
+        @Schema(description = "Versão dos Termos de Uso aceita pelo usuário")
+        String termsVersion,
+
+        @Schema(description = "Data do aceite dos Termos de Uso")
+        LocalDateTime termsAcceptedAt,
+
+        @Schema(description = "Versão da Política de Privacidade aceita pelo usuário")
+        String privacyVersion,
+
+        @Schema(description = "Data do aceite da Política de Privacidade")
+        LocalDateTime privacyAcceptedAt,
 
         @Schema(description = "Data de criação do usuário", example = "2023-01-01T00:00:00")
         LocalDateTime createdAt,
