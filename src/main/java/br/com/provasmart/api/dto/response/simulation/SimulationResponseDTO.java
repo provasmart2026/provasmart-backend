@@ -16,7 +16,7 @@ public record SimulationResponseDTO(
         @Schema(description = "ID do aluno", example = "123e4567-e89b-12d3-a456-426614174000")
         UUID studentId,
 
-        @Schema(description = "Status da simulação", example = "IN_PROGRESS")
+        @Schema(description = "Status da simulação", example = "EM_ANDAMENTO")
         SimulationStatusEnum status,
 
         @Schema(description = "Data de início da simulação", example = "2023-01-01T00:00:00Z")

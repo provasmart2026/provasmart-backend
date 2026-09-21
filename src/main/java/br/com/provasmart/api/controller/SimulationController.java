@@ -18,9 +18,9 @@ public class SimulationController {
 
     private final ISimulationService simulationService;
 
-    @PostMapping("/student/{studentId}")
-    public ResponseEntity<SimulationResponseDTO> create(@PathVariable UUID studentId) {
-        var simulation = simulationService.create(studentId);
+    @PostMapping
+    public ResponseEntity<SimulationResponseDTO> create() {
+        var simulation = simulationService.create();
         var location = URI.create("/simulations/" + simulation.id());
         return ResponseEntity.created(location).body(simulation);
     }

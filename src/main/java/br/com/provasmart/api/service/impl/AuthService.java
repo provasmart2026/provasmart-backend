@@ -3,7 +3,9 @@ package br.com.provasmart.api.service.impl;
 import br.com.provasmart.api.domain.entity.authentication.AuthenticationCodeEntity;
 import br.com.provasmart.api.domain.entity.users.UserEntity;
 import br.com.provasmart.api.domain.enums.AuthenticationCodePurposeEnum;
+import br.com.provasmart.api.dto.request.auth.ForgotPasswordRequestDTO;
 import br.com.provasmart.api.dto.request.auth.LoginRequestDTO;
+import br.com.provasmart.api.dto.request.auth.ResetPasswordRequestDTO;
 import br.com.provasmart.api.dto.request.auth.VerifyTwoFactorRequestDTO;
 import br.com.provasmart.api.dto.response.auth.LoginResponseDTO;
 import br.com.provasmart.api.dto.response.auth.TokenResponseDTO;
@@ -77,13 +79,70 @@ public class AuthService implements IAuthService {
 
         validateAuthenticationCode(verifyTwoFactorRequestDTO.code(), authenticationCode);
 
-        authenticationCode.setUsed(true);
-        log.info("Marking two-factor authentication code as used.");
-        authenticationCodeRepository.save(authenticationCode);
+        markUsedTrue(authenticationCode);
 
         var token = jwtService.generateToken(user);
 
         return new TokenResponseDTO(token);
+    }
+
+
+    @Override
+    public LoginResponseDTO forgotPassword(ForgotPasswordRequestDTO forgotPasswordRequestDTO) {
+        log.info("Starting password recovery");
+
+        var normalizedEmail = normalizeEmail(forgotPasswordRequestDTO.email());
+        var user = findUserByEmail(normalizedEmail);
+
+        invalidatePreviousPasswordResetCodes(user);
+
+        var code = generateTwoFactorCode();
+        var encodedCode = passwordEncoder.encode(code);
+        var expiresAt = LocalDateTime.now().plusMinutes(5);
+
+        var authenticationCode = mapToPasswordResetEntity(user, encodedCode, expiresAt);
+
+        save(authenticationCode);
+        sendEmailResetPassword(user, code);
+
+        log.info("Password reset code generated and sent successfully.");
+
+        return new LoginResponseDTO("Código de redefinição de senha enviado para o email do usuário.");
+    }
+
+    @Override
+    public LoginResponseDTO resetPassword(ResetPasswordRequestDTO resetPasswordRequestDTO) {
+        log.info("Starting password reset process.");
+
+        var normalizedEmail = normalizeEmail(resetPasswordRequestDTO.email());
+        var user = findUserByEmail(normalizedEmail);
+
+        var authenticationCode = findPasswordResetCode(user);
+
+        validateCodeExpiration(authenticationCode);
+
+        validateAuthenticationCode(resetPasswordRequestDTO.code(), authenticationCode);
+
+        var encodedNewPassword = passwordEncoder.encode(resetPasswordRequestDTO.newPassword());
+
+        setNewPassword(user, encodedNewPassword);
+
+        markUsedTrue(authenticationCode);
+
+        log.info("Password reset successfully");
+        return new LoginResponseDTO("Senha redefinida com sucesso.");
+    }
+
+    private void setNewPassword(UserEntity user, String encodedNewPassword) {
+        log.info("Setting new password");
+        user.setPassword(encodedNewPassword);
+        log.info("Saving user with new password");
+        userRepository.save(user);
+    }
+
+    private void sendEmailResetPassword(UserEntity user, String code) {
+        log.info("Sending password reset email");
+        emailService.sendPasswordResetCode(user.getEmail(), code);
     }
 
     private void sendEmail(UserEntity user, String code) {
@@ -95,9 +154,20 @@ public class AuthService implements IAuthService {
         return authenticationCodeRepository.save(authenticationCode);
     }
 
+    private void markUsedTrue(AuthenticationCodeEntity authenticationCode) {
+        authenticationCode.setUsed(true);
+        log.info("Marking two-factor authentication code as used.");
+        authenticationCodeRepository.save(authenticationCode);
+    }
+
     private AuthenticationCodeEntity mapToEntity(UserEntity user, String encodedCode, LocalDateTime expiresAt) {
         log.info("Mapping user to authentication code entity.");
         return authenticationCodeMapper.toEntity(user, encodedCode, AuthenticationCodePurposeEnum.LOGIN_2FA, expiresAt);
+    }
+
+    private AuthenticationCodeEntity mapToPasswordResetEntity(UserEntity user, String encodedCode, LocalDateTime expiresAt) {
+        log.info("Mapping user to password reset authentication code entity.");
+        return authenticationCodeMapper.toEntity(user, encodedCode, AuthenticationCodePurposeEnum.PASSWORD_RESET, expiresAt);
     }
 
     private static String normalizeEmail(String email) {
@@ -144,7 +214,15 @@ public class AuthService implements IAuthService {
         authenticationCodeRepository.saveAll(authenticationCodes);
     }
 
-    private AuthenticationCodeEntity findAuthenticationCode(UserEntity user){
+    private void invalidatePreviousPasswordResetCodes(UserEntity user) {
+        log.info("Invalidating previous password reset code for user: {}", user.getEmail());
+
+        var authenticationCodes = authenticationCodeRepository.findAllByUserAndPurposeAndUsedFalse(user, AuthenticationCodePurposeEnum.PASSWORD_RESET);
+        authenticationCodes.forEach(code -> code.setUsed(true));
+        authenticationCodeRepository.saveAll(authenticationCodes);
+    }
+
+    private AuthenticationCodeEntity findAuthenticationCode(UserEntity user) {
         log.info("Finding authentication code");
 
         return authenticationCodeRepository.findFirstByUserAndPurposeAndUsedFalseOrderByCreatedAtDesc(user, AuthenticationCodePurposeEnum.LOGIN_2FA)
@@ -154,7 +232,7 @@ public class AuthService implements IAuthService {
                 });
     }
 
-    private void  validateCodeExpiration(AuthenticationCodeEntity authenticationCode) {
+    private void validateCodeExpiration(AuthenticationCodeEntity authenticationCode) {
         log.info("Validating two-factor authentication code expiration.");
 
         if (authenticationCode.getExpiresAt().isBefore(LocalDateTime.now())) {
@@ -163,13 +241,22 @@ public class AuthService implements IAuthService {
         }
     }
 
-    private void  validateAuthenticationCode(String code, AuthenticationCodeEntity authenticationCode) {
+    private void validateAuthenticationCode(String code, AuthenticationCodeEntity authenticationCode) {
         log.info("Validating two-factor authentication code.");
 
         if (!passwordEncoder.matches(code, authenticationCode.getCode())) {
             log.error("Invalid two-factor authentication code.");
             throw new IllegalArgumentException("Código de autenticação inválido.");
         }
+    }
 
+    private AuthenticationCodeEntity findPasswordResetCode(UserEntity user) {
+        log.info("Finding password reset code");
+
+        return authenticationCodeRepository.findFirstByUserAndPurposeAndUsedFalseOrderByCreatedAtDesc(user, AuthenticationCodePurposeEnum.PASSWORD_RESET)
+                .orElseThrow(() -> {
+                    log.error("Password reset code not found.");
+                    return new IllegalArgumentException("Código de redefinição de senha não encontrado.");
+                });
     }
 }
