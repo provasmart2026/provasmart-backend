@@ -5,6 +5,7 @@ import br.com.provasmart.api.domain.entity.questions.QuestionEntity;
 import br.com.provasmart.api.domain.entity.simulations.SimulationAnswerEntity;
 import br.com.provasmart.api.domain.entity.simulations.SimulationEntity;
 import br.com.provasmart.api.domain.entity.simulations.SimulationQuestionEntity;
+import br.com.provasmart.api.domain.entity.users.UserEntity;
 import br.com.provasmart.api.domain.enums.ExamAreaEnum;
 import br.com.provasmart.api.domain.enums.SimulationStatusEnum;
 import br.com.provasmart.api.dto.request.simulation.SimulationAnswerRequestDTO;
@@ -17,6 +18,8 @@ import br.com.provasmart.api.repository.questions.IQuestionRepository;
 import br.com.provasmart.api.repository.simulations.ISimulationAnswerRepository;
 import br.com.provasmart.api.repository.simulations.ISimulationQuestionRepository;
 import br.com.provasmart.api.repository.simulations.ISimulationRepository;
+import br.com.provasmart.api.repository.users.IUserRepository;
+import br.com.provasmart.api.service.ICurrentActorService;
 import br.com.provasmart.api.service.ISimulationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -51,13 +54,21 @@ public class SimulationService implements ISimulationService {
 
     private final ISimulationAnswerMapper simulationAnswerMapper;
 
+    private final IUserRepository userRepository;
+
+    private final ICurrentActorService currentActorService;
+
     @Override
-    public SimulationResponseDTO create(UUID studentId) {
+    public SimulationResponseDTO create() {
+        var studentId = getCurrentStudentId();
+
         log.info("Creating a new simulation for student with ID {}", studentId);
+
+        var student = findStudentById(studentId);
 
         validateStudentHasNoSimulationInProgress(studentId);
 
-        var simulationEntity = simulationEntity(studentId);
+        var simulationEntity = simulationEntity(student);
 
         addQuestionsToSimulation(simulationEntity);
 
@@ -69,18 +80,22 @@ public class SimulationService implements ISimulationService {
 
     @Override
     public SimulationResponseDTO findById(UUID simulationId) {
+        var studentId = getCurrentStudentId();
+
         log.info("Finding simulation for ID {}", simulationId);
 
-        var simulationEntity = getSimulationById(simulationId);
+        var simulationEntity = getSimulationById(simulationId, studentId);
 
         return mapToDto(simulationEntity);
     }
 
     @Override
     public SimulationResponseDTO answerQuestion(UUID simulationId, UUID simulationQuestionId, SimulationAnswerRequestDTO answerRequestDTO) {
+        var studentId = getCurrentStudentId();
+
         log.info("Answering question with Id {} for simulation with ID {}", simulationQuestionId, simulationId);
 
-        var simulationEntity = getSimulationById(simulationId);
+        var simulationEntity = getSimulationById(simulationId, studentId);
 
         validateSimulationIsInProgress(simulationEntity);
 
@@ -106,9 +121,11 @@ public class SimulationService implements ISimulationService {
 
     @Override
     public SimulationResponseDTO finishSimulation(UUID simulationId) {
+        var studentId = getCurrentStudentId();
+
         log.info("Finishing simulation for ID {}", simulationId);
 
-        var simulationEntity = getSimulationById(simulationId);
+        var simulationEntity = getSimulationById(simulationId, studentId);
 
         validateSimulationIsInProgress(simulationEntity);
 
@@ -119,6 +136,11 @@ public class SimulationService implements ISimulationService {
         var savedSimulation = save(simulationEntity);
 
         return mapToDto(savedSimulation);
+    }
+
+    private UUID getCurrentStudentId() {
+        log.info("Getting current student ID");
+        return currentActorService.getCurrentUserId();
     }
 
     private static void finishSimulationEntity(SimulationEntity simulationEntity) {
@@ -161,7 +183,7 @@ public class SimulationService implements ISimulationService {
         log.info("Validating if student with ID {} has a simulation in progress", studentId);
 
         var hasSimulationInProgress =
-                simulationRepository.existsByStudentIdAndStatus(studentId, SimulationStatusEnum.EM_ANDAMENTO);
+                simulationRepository.existsByStudent_IdAndStatus(studentId, SimulationStatusEnum.EM_ANDAMENTO);
 
         if (hasSimulationInProgress) {
             log.error("Student with ID {} already has a simulation in progress", studentId);
@@ -169,9 +191,9 @@ public class SimulationService implements ISimulationService {
         }
     }
 
-    private SimulationEntity simulationEntity(UUID studentId) {
-        log.info("Mapping student ID {} to SimulationEntity", studentId);
-        return simulationMapper.toEntity(studentId);
+    private SimulationEntity simulationEntity(UserEntity student) {
+        log.info("Mapping student ID {} to SimulationEntity", student.getId());
+        return simulationMapper.toEntity(student);
     }
 
     private List<QuestionEntity> selectQuestionsByArea(ExamAreaEnum examArea) {
@@ -193,7 +215,7 @@ public class SimulationService implements ISimulationService {
     }
 
     private void addQuestionsToSimulation(SimulationEntity simulationEntity) {
-        log.info("Adding questions to simulation for student with ID {}", simulationEntity.getStudentId());
+        log.info("Adding questions to simulation for student with ID {}", simulationEntity.getStudent().getId());
         var position = 1;
 
         for (var examArea : ExamAreaEnum.values()) {
@@ -209,10 +231,10 @@ public class SimulationService implements ISimulationService {
         }
     }
 
-    private SimulationEntity getSimulationById(UUID simulationId) {
-        log.info("Getting simulation with ID {}", simulationId);
+    private SimulationEntity getSimulationById(UUID simulationId, UUID studentId) {
+        log.info("Getting simulation with ID {} for student with ID {}", simulationId, studentId);
 
-        return simulationRepository.findById(simulationId)
+        return simulationRepository.findByIdAndStudent_Id(simulationId, studentId)
                 .orElseThrow(() -> {
                     log.error("Simulation with ID {} not found", simulationId);
                     return new IllegalArgumentException("Simulado não encontrado");
@@ -276,6 +298,16 @@ public class SimulationService implements ISimulationService {
         log.info("Getting or creating answer for question with ID {}", simulationQuestionId);
         return simulationAnswerRepository.findBySimulationQuestionId(simulationQuestionId)
                 .orElseGet(SimulationAnswerEntity::new);
+    }
+
+    private UserEntity findStudentById(UUID studentId) {
+        log.info("Finding student with ID {}", studentId);
+
+        return userRepository.findById(studentId)
+                .orElseThrow(() -> {
+                    log.error("Student with ID {} not found", studentId);
+                    return new IllegalArgumentException("Estudante não encontrado.");
+                });
     }
 
 }

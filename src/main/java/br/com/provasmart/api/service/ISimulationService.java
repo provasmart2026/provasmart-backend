@@ -7,7 +7,7 @@ import java.util.UUID;
 
 public interface ISimulationService {
 
-    SimulationResponseDTO create(UUID studentId);
+    SimulationResponseDTO create();
 
     SimulationResponseDTO findById(UUID simulationId);
 
