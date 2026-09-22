@@ -60,7 +60,7 @@ public class SimulationService implements ISimulationService {
 
     @Override
     public SimulationResponseDTO create() {
-        var studentId = currentActorService.getCurrentUserId();
+        var studentId = getCurrentStudentId();
 
         log.info("Creating a new simulation for student with ID {}", studentId);
 
@@ -80,7 +80,7 @@ public class SimulationService implements ISimulationService {
 
     @Override
     public SimulationResponseDTO findById(UUID simulationId) {
-        var studentId = currentActorService.getCurrentUserId();
+        var studentId = getCurrentStudentId();
 
         log.info("Finding simulation for ID {}", simulationId);
 
@@ -91,7 +91,7 @@ public class SimulationService implements ISimulationService {
 
     @Override
     public SimulationResponseDTO answerQuestion(UUID simulationId, UUID simulationQuestionId, SimulationAnswerRequestDTO answerRequestDTO) {
-        var studentId = currentActorService.getCurrentUserId();
+        var studentId = getCurrentStudentId();
 
         log.info("Answering question with Id {} for simulation with ID {}", simulationQuestionId, simulationId);
 
@@ -121,7 +121,7 @@ public class SimulationService implements ISimulationService {
 
     @Override
     public SimulationResponseDTO finishSimulation(UUID simulationId) {
-        var studentId = currentActorService.getCurrentUserId();
+        var studentId = getCurrentStudentId();
 
         log.info("Finishing simulation for ID {}", simulationId);
 
@@ -136,6 +136,11 @@ public class SimulationService implements ISimulationService {
         var savedSimulation = save(simulationEntity);
 
         return mapToDto(savedSimulation);
+    }
+
+    private UUID getCurrentStudentId() {
+        log.info("Getting current student ID");
+        return currentActorService.getCurrentUserId();
     }
 
     private static void finishSimulationEntity(SimulationEntity simulationEntity) {
