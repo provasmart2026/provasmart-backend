@@ -1,6 +1,7 @@
 package br.com.provasmart.api.service.impl;
 
 import br.com.provasmart.api.domain.entity.users.UserEntity;
+import br.com.provasmart.api.domain.enums.RoleEnum;
 import br.com.provasmart.api.dto.request.user.UserRequestDTO;
 import br.com.provasmart.api.dto.response.user.UserResponseDTO;
 import br.com.provasmart.api.mapper.user.IUserMapper;
@@ -90,6 +91,9 @@ public class UserService implements IUserService {
     public void deactivate(UUID id) {
         log.info("Deactivating user with id: {}", id);
         var userEntity = findUserById(id);
+
+        validateUserIsNotAdmin(userEntity);
+
         userEntity.setActive(false);
         userEntity.setUpdatedAt(LocalDateTime.now());
         save(userEntity);
@@ -102,6 +106,31 @@ public class UserService implements IUserService {
         log.info("Requesting deletion for user with id: {}", userId);
         markDeletionRequest(userEntity);
         save(userEntity);
+    }
+
+    @Override
+    public void delete(UUID id) {
+        log.info("Deleting user with id: {}", id);
+        var userEntity = findUserById(id);
+
+        validateUserIsNotAdmin(userEntity);
+        validateDeletionRequested(userEntity);
+
+        userRepository.delete(userEntity);
+    }
+
+    private void validateUserIsNotAdmin(UserEntity userEntity) {
+        if (userEntity.getRole() == RoleEnum.ADMIN) {
+            log.error("Operation not allowed for admin user with id: {}", userEntity.getId());
+            throw new IllegalArgumentException("Esta operação não é permitida para usuário administrador.");
+        }
+    }
+
+    private void  validateDeletionRequested(UserEntity userEntity) {
+        if (!userEntity.isDeletionRequested()) {
+            log.error("Attempted to delete user with id: {} without a deletion request.", userEntity.getId());
+            throw new IllegalArgumentException("O usuário não solicitou a exclusão.");
+        }
     }
 
     private static void markDeletionRequest(UserEntity userEntity) {

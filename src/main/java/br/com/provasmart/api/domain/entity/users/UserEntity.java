@@ -1,5 +1,7 @@
 package br.com.provasmart.api.domain.entity.users;
 
+import br.com.provasmart.api.domain.entity.authentication.AuthenticationCodeEntity;
+import br.com.provasmart.api.domain.entity.simulations.SimulationEntity;
 import br.com.provasmart.api.domain.enums.RoleEnum;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
@@ -9,6 +11,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Getter
@@ -64,4 +68,9 @@ public class UserEntity {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<AuthenticationCodeEntity> authenticationCodes = new ArrayList<>();
+
+    @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<SimulationEntity> simulations = new ArrayList<>();
 }

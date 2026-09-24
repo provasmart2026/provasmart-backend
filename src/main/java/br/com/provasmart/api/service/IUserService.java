@@ -22,4 +22,6 @@ public interface IUserService {
     void  deactivate(UUID id);
 
     void requestDelete();
+
+    void delete(UUID id);
 }

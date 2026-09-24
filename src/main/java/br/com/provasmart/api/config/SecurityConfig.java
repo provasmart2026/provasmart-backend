@@ -43,6 +43,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/users/me").authenticated()
                         .requestMatchers(HttpMethod.PATCH, "/users/me/request-deletion").authenticated()
                         .requestMatchers(HttpMethod.GET, "/users", "/users/{id}").hasRole(RoleEnum.ADMIN.name())
+                        .requestMatchers(HttpMethod.DELETE, "/users/{id}").hasRole(RoleEnum.ADMIN.name())
                         .requestMatchers(HttpMethod.PATCH, "/users/{id}/activate", "/users/{id}/deactivate")
                         .hasRole(RoleEnum.ADMIN.name())
                         .requestMatchers("/questions/**").hasRole(RoleEnum.ADMIN.name())
