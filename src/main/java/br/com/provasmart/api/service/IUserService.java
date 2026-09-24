@@ -15,7 +15,13 @@ public interface IUserService {
 
     Page<UserResponseDTO> findAll(Pageable pageable);
 
+    UserResponseDTO findCurrentUser();
+
     void activate(UUID id);
 
     void  deactivate(UUID id);
+
+    void requestDelete();
+
+    void delete(UUID id);
 }

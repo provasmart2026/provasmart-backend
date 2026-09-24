@@ -12,6 +12,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
@@ -30,6 +31,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
+                .cors(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .formLogin(AbstractHttpConfigurer::disable)
@@ -40,7 +42,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/auth/verify-2fa").permitAll()
                         .requestMatchers(HttpMethod.POST, "/auth/forgot-password").permitAll()
                         .requestMatchers(HttpMethod.POST, "/auth/reset-password").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/users/me").authenticated()
+                        .requestMatchers(HttpMethod.PATCH, "/users/me/request-deletion").authenticated()
                         .requestMatchers(HttpMethod.GET, "/users", "/users/{id}").hasRole(RoleEnum.ADMIN.name())
+                        .requestMatchers(HttpMethod.DELETE, "/users/{id}").hasRole(RoleEnum.ADMIN.name())
                         .requestMatchers(HttpMethod.PATCH, "/users/{id}/activate", "/users/{id}/deactivate")
                         .hasRole(RoleEnum.ADMIN.name())
                         .requestMatchers("/questions/**").hasRole(RoleEnum.ADMIN.name())

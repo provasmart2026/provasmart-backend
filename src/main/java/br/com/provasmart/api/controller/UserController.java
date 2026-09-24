@@ -27,6 +27,18 @@ public class UserController {
         return ResponseEntity.created(location).body(user);
     }
 
+    @GetMapping("/me")
+    public ResponseEntity<UserResponseDTO> findCurrentUser() {
+        var user = userService.findCurrentUser();
+        return ResponseEntity.ok(user);
+    }
+
+    @PatchMapping("/me/request-deletion")
+    public ResponseEntity<Void> requestDelete() {
+        userService.requestDelete();
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<UserResponseDTO> findById(@PathVariable UUID id) {
         var user = userService.findById(id);
@@ -37,6 +49,12 @@ public class UserController {
     public ResponseEntity<Page<UserResponseDTO>> findAll(Pageable pageable) {
         var users = userService.findAll(pageable);
         return ResponseEntity.ok(users);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable UUID id) {
+        userService.delete(id);
+        return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{id}/activate")
