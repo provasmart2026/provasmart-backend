@@ -5,6 +5,7 @@ import br.com.provasmart.api.dto.request.user.UserRequestDTO;
 import br.com.provasmart.api.dto.response.user.UserResponseDTO;
 import br.com.provasmart.api.mapper.user.IUserMapper;
 import br.com.provasmart.api.repository.users.IUserRepository;
+import br.com.provasmart.api.service.ICurrentActorService;
 import br.com.provasmart.api.service.IUserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +27,8 @@ public class UserService implements IUserService {
     private final IUserMapper userMapper;
 
     private final PasswordEncoder passwordEncoder;
+
+    private final ICurrentActorService currentActorService;
 
     @Override
     public UserResponseDTO create(UserRequestDTO userRequestDTO) {
@@ -65,6 +68,16 @@ public class UserService implements IUserService {
     }
 
     @Override
+    public UserResponseDTO findCurrentUser() {
+        log.info("Finding current user");
+
+        var userId = currentActorService.getCurrentUserId();
+        var userEntity = findUserById(userId);
+
+        return mapToDTO(userEntity);
+    }
+
+    @Override
     public void activate(UUID id) {
         log.info("Activating user with id: {}", id);
         var userEntity = findUserById(id);
@@ -80,6 +93,21 @@ public class UserService implements IUserService {
         userEntity.setActive(false);
         userEntity.setUpdatedAt(LocalDateTime.now());
         save(userEntity);
+    }
+
+    @Override
+    public void requestDelete() {
+        var userId = currentActorService.getCurrentUserId();
+        var userEntity = findUserById(userId);
+        log.info("Requesting deletion for user with id: {}", userId);
+        markDeletionRequest(userEntity);
+        save(userEntity);
+    }
+
+    private static void markDeletionRequest(UserEntity userEntity) {
+        userEntity.setDeletionRequested(true);
+        userEntity.setDeletionRequestedAt(LocalDateTime.now());
+        userEntity.setUpdatedAt(LocalDateTime.now());
     }
 
     private static String normalizeEmail(UserRequestDTO userRequestDTO) {

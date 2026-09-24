@@ -14,6 +14,7 @@ public interface IUserMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "role", expression = "java(RoleEnum.ESTUDANTE)")
     @Mapping(target = "active", constant = "true")
+    @Mapping(target = "deletionRequested", constant = "false")
     @Mapping(target = "termsAcceptedAt", expression = "java(java.time.LocalDateTime.now())")
     @Mapping(target = "termsVersion", constant = "1.0")
     @Mapping(target = "privacyAcceptedAt", expression = "java(java.time.LocalDateTime.now())")

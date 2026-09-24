@@ -24,6 +24,12 @@ public record UserResponseDTO(
         @Schema(description = "Indica se o usuário está ativo", example = "true")
         boolean active,
 
+        @Schema(description = "Indica se o usuário solicitou a exclusão", example = "true")
+        boolean deletedRequested,
+
+        @Schema(description = "Data da solicitação de exclusão do usuário", example = "2023-01-01T00:00:00")
+        LocalDateTime deletedRequestedAt,
+
         @Schema(description = "Versão dos Termos de Uso aceita pelo usuário")
         String termsVersion,
 

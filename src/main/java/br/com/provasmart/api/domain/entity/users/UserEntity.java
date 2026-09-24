@@ -40,6 +40,12 @@ public class UserEntity {
     @Column(name = "active", nullable = false)
     private boolean active;
 
+    @Column(name = "deletion_requested", nullable = false)
+    private boolean deletionRequested;
+
+    @Column(name = "deletion_requested_at")
+    private LocalDateTime deletionRequestedAt;
+
     @Column(name = "terms_accepted_at", nullable = false)
     private LocalDateTime termsAcceptedAt;
 
