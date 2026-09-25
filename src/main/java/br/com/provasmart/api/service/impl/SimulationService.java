@@ -10,6 +10,9 @@ import br.com.provasmart.api.domain.enums.ExamAreaEnum;
 import br.com.provasmart.api.domain.enums.SimulationStatusEnum;
 import br.com.provasmart.api.dto.request.simulation.SimulationAnswerRequestDTO;
 import br.com.provasmart.api.dto.response.simulation.SimulationResponseDTO;
+import br.com.provasmart.api.exception.BadRequestException;
+import br.com.provasmart.api.exception.ConflictException;
+import br.com.provasmart.api.exception.NotFoundException;
 import br.com.provasmart.api.mapper.simulation.ISimulationAnswerMapper;
 import br.com.provasmart.api.mapper.simulation.ISimulationMapper;
 import br.com.provasmart.api.mapper.simulation.ISimulationQuestionMapper;
@@ -158,7 +161,7 @@ public class SimulationService implements ISimulationService {
 
         if (hasUnansweredQuestion) {
             log.error("Not all questions have been answered for simulation with ID {}", simulationEntity.getId());
-            throw new IllegalStateException("Todas as questões devem ser respondidas antes de finalizar a simulação.");
+            throw new BadRequestException("Todas as questões devem ser respondidas antes de finalizar o simulado.");
         }
     }
 
@@ -187,7 +190,7 @@ public class SimulationService implements ISimulationService {
 
         if (hasSimulationInProgress) {
             log.error("Student with ID {} already has a simulation in progress", studentId);
-            throw new IllegalStateException("Já existe um simulado em andamento para este estudante.");
+            throw new ConflictException("Já existe um simulado em andamento para este estudante.");
         }
     }
 
@@ -204,7 +207,7 @@ public class SimulationService implements ISimulationService {
         if (questions.size() < QUESTIONS_PER_AREA) {
             log.error("Insufficient active questions for exam area {}: required {}, found {}",
                     examArea, QUESTIONS_PER_AREA, questions.size());
-            throw new IllegalStateException("Não há questões suficientes para a área de prova: " + examArea);
+            throw new ConflictException("Não há questões suficientes para a área de prova: " + examArea);
         }
 
         var randomQuestions = new ArrayList<>(questions);
@@ -237,7 +240,7 @@ public class SimulationService implements ISimulationService {
         return simulationRepository.findByIdAndStudent_Id(simulationId, studentId)
                 .orElseThrow(() -> {
                     log.error("Simulation with ID {} not found", simulationId);
-                    return new IllegalArgumentException("Simulado não encontrado");
+                    return new NotFoundException("Simulado não encontrado.");
                 });
     }
 
@@ -247,7 +250,7 @@ public class SimulationService implements ISimulationService {
         if (simulationEntity.getStatus() != SimulationStatusEnum.EM_ANDAMENTO) {
             log.error("Simulation with ID {} is not in progress: current status {}",
                     simulationEntity.getId(), simulationEntity.getStatus());
-            throw new IllegalStateException("O simulado não está em andamento.");
+            throw new ConflictException("O simulado não está em andamento.");
         }
     }
 
@@ -257,7 +260,7 @@ public class SimulationService implements ISimulationService {
         return simulationQuestionRepository.findById(simulationQuestionId)
                 .orElseThrow(() -> {
                     log.error("Simulation question with ID {} not found", simulationQuestionId);
-                    return new IllegalArgumentException("Questão do simulado não encontrado");
+                    return new NotFoundException("Questão do simulado não encontrada.");
                 });
     }
 
@@ -267,7 +270,7 @@ public class SimulationService implements ISimulationService {
         return alternativeRepository.findById(alternativeId)
                 .orElseThrow(() -> {
                     log.error("Alternative with ID {} not found", alternativeId);
-                    return new IllegalArgumentException("Alternativa não encontrada");
+                    return new NotFoundException("Alternativa não encontrada.");
                 });
     }
 
@@ -277,9 +280,7 @@ public class SimulationService implements ISimulationService {
         if (!simulationQuestion.getSimulation().getId().equals(simulationEntity.getId())) {
             log.error("Simulation question with ID {} belongs to simulation with ID {}, not requested simulation with ID {}",
                     simulationQuestion.getId(), simulationQuestion.getSimulation().getId(), simulationEntity.getId());
-            throw new IllegalArgumentException(
-                    "A questão não pertence a este simulado."
-            );
+            throw new BadRequestException("A questão não pertence a este simulado.");
         }
     }
 
@@ -290,7 +291,7 @@ public class SimulationService implements ISimulationService {
             log.error("Alternative with ID {} belongs to question with ID {}, not question with ID {} for simulation question with ID {}",
                     alternative.getId(), alternative.getQuestion().getId(),
                     simulationQuestion.getQuestion().getId(), simulationQuestion.getId());
-            throw new IllegalArgumentException("A alternativa não pertence à questão do simulado.");
+            throw new BadRequestException("A alternativa não pertence à questão do simulado.");
         }
     }
 
@@ -306,7 +307,7 @@ public class SimulationService implements ISimulationService {
         return userRepository.findById(studentId)
                 .orElseThrow(() -> {
                     log.error("Student with ID {} not found", studentId);
-                    return new IllegalArgumentException("Estudante não encontrado.");
+                    return new NotFoundException("Estudante não encontrado.");
                 });
     }
 

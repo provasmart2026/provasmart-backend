@@ -9,6 +9,8 @@ import br.com.provasmart.api.dto.request.auth.ResetPasswordRequestDTO;
 import br.com.provasmart.api.dto.request.auth.VerifyTwoFactorRequestDTO;
 import br.com.provasmart.api.dto.response.auth.LoginResponseDTO;
 import br.com.provasmart.api.dto.response.auth.TokenResponseDTO;
+import br.com.provasmart.api.exception.BadRequestException;
+import br.com.provasmart.api.exception.UnauthorizedException;
 import br.com.provasmart.api.mapper.authentication.IAuthenticationCodeMapper;
 import br.com.provasmart.api.repository.authentication.IAuthenticationCodeRepository;
 import br.com.provasmart.api.repository.users.IUserRepository;
@@ -180,7 +182,7 @@ public class AuthService implements IAuthService {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> {
                     log.error("Login attempt with invalid credentials.");
-                    return new IllegalArgumentException("Email ou senha inválidos");
+                    return new UnauthorizedException("Email ou senha inválidos.");
                 });
     }
 
@@ -188,7 +190,7 @@ public class AuthService implements IAuthService {
         log.info("Validating user active for email: {}", user.getEmail());
         if (!user.isActive()) {
             log.error("User with email {} is not active.", user.getEmail());
-            throw new IllegalArgumentException("Usuário não está ativo");
+            throw new UnauthorizedException("Usuário não está ativo.");
         }
     }
 
@@ -196,7 +198,7 @@ public class AuthService implements IAuthService {
         log.info("Validating password for user with email: {}", user.getEmail());
         if (!passwordEncoder.matches(password, user.getPassword())) {
             log.error("Invalid password for user with email: {}", user.getEmail());
-            throw new IllegalArgumentException("Email ou senha inválidos");
+            throw new UnauthorizedException("Email ou senha inválidos.");
         }
     }
 
@@ -228,7 +230,7 @@ public class AuthService implements IAuthService {
         return authenticationCodeRepository.findFirstByUserAndPurposeAndUsedFalseOrderByCreatedAtDesc(user, AuthenticationCodePurposeEnum.LOGIN_2FA)
                 .orElseThrow(() -> {
                     log.error("Two-factor authentication code not found.");
-                    return new IllegalArgumentException("Código de autenticação não encontrado.");
+                    return new BadRequestException("Código de autenticação não encontrado.");
                 });
     }
 
@@ -237,7 +239,7 @@ public class AuthService implements IAuthService {
 
         if (authenticationCode.getExpiresAt().isBefore(LocalDateTime.now())) {
             log.error("Two-factor authentication code has expired.");
-            throw new IllegalArgumentException("Código de autenticação expirado.");
+            throw new BadRequestException("Código de autenticação expirado.");
         }
     }
 
@@ -246,7 +248,7 @@ public class AuthService implements IAuthService {
 
         if (!passwordEncoder.matches(code, authenticationCode.getCode())) {
             log.error("Invalid two-factor authentication code.");
-            throw new IllegalArgumentException("Código de autenticação inválido.");
+            throw new BadRequestException("Código de autenticação inválido.");
         }
     }
 
@@ -256,7 +258,7 @@ public class AuthService implements IAuthService {
         return authenticationCodeRepository.findFirstByUserAndPurposeAndUsedFalseOrderByCreatedAtDesc(user, AuthenticationCodePurposeEnum.PASSWORD_RESET)
                 .orElseThrow(() -> {
                     log.error("Password reset code not found.");
-                    return new IllegalArgumentException("Código de redefinição de senha não encontrado.");
+                    return new BadRequestException("Código de redefinição de senha não encontrado.");
                 });
     }
 }

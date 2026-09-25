@@ -4,6 +4,9 @@ import br.com.provasmart.api.domain.entity.users.UserEntity;
 import br.com.provasmart.api.domain.enums.RoleEnum;
 import br.com.provasmart.api.dto.request.user.UserRequestDTO;
 import br.com.provasmart.api.dto.response.user.UserResponseDTO;
+import br.com.provasmart.api.exception.BadRequestException;
+import br.com.provasmart.api.exception.ConflictException;
+import br.com.provasmart.api.exception.NotFoundException;
 import br.com.provasmart.api.mapper.user.IUserMapper;
 import br.com.provasmart.api.repository.users.IUserRepository;
 import br.com.provasmart.api.service.ICurrentActorService;
@@ -122,14 +125,14 @@ public class UserService implements IUserService {
     private void validateUserIsNotAdmin(UserEntity userEntity) {
         if (userEntity.getRole() == RoleEnum.ADMIN) {
             log.error("Operation not allowed for admin user with id: {}", userEntity.getId());
-            throw new IllegalArgumentException("Esta operação não é permitida para usuário administrador.");
+            throw new BadRequestException("Esta operação não é permitida para usuário administrador.");
         }
     }
 
-    private void  validateDeletionRequested(UserEntity userEntity) {
+    private void validateDeletionRequested(UserEntity userEntity) {
         if (!userEntity.isDeletionRequested()) {
             log.error("Attempted to delete user with id: {} without a deletion request.", userEntity.getId());
-            throw new IllegalArgumentException("O usuário não solicitou a exclusão.");
+            throw new ConflictException("O usuário não solicitou a exclusão.");
         }
     }
 
@@ -154,7 +157,6 @@ public class UserService implements IUserService {
         return userRepository.save(userEntity);
     }
 
-
     private UserEntity mapToEntity(UserRequestDTO userRequestDTO) {
         log.info("Mapping UserRequestDTO to UserEntity.");
         return userMapper.toEntity(userRequestDTO);
@@ -163,14 +165,14 @@ public class UserService implements IUserService {
     private void validateEmailExists(String normalizedEmail) {
         if (userRepository.existsByEmail(normalizedEmail)) {
             log.error("User with email {} already exists.", normalizedEmail);
-            throw new IllegalArgumentException("Usuário com este e-mail já existe.");
+            throw new ConflictException("Usuário com este e-mail já existe.");
         }
     }
 
     private UserEntity findUserById(UUID id) {
         return userRepository.findById(id).orElseThrow(() -> {
             log.error("User with id {} not found.", id);
-            return new IllegalArgumentException("Usuário não encontrado.");
+            return new NotFoundException("Usuário não encontrado.");
         });
     }
 }
