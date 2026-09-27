@@ -1,0 +1,61 @@
+package br.com.provasmart.api.controller.auth;
+
+import br.com.provasmart.api.audit.AuditContext;
+import br.com.provasmart.api.dto.request.auth.ForgotPasswordRequestDTO;
+import br.com.provasmart.api.dto.request.auth.LoginRequestDTO;
+import br.com.provasmart.api.dto.request.auth.ResetPasswordRequestDTO;
+import br.com.provasmart.api.dto.request.auth.VerifyTwoFactorRequestDTO;
+import br.com.provasmart.api.dto.response.auth.LoginResponseDTO;
+import br.com.provasmart.api.dto.response.auth.TokenResponseDTO;
+import br.com.provasmart.api.service.IAuthService;
+import jakarta.validation.Valid;
+import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequestMapping("/auth")
+@RequiredArgsConstructor
+public class AuthController {
+
+    private final IAuthService authService;
+
+    @PostMapping("/login")
+    public ResponseEntity<LoginResponseDTO> login(@RequestBody @Valid LoginRequestDTO loginRequestDTO,
+                                                  HttpServletRequest request) {
+        AuditContext.setActorEmail(request, loginRequestDTO.email());
+        var response = authService.login(loginRequestDTO);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/verify-2fa")
+    public ResponseEntity<TokenResponseDTO> verifyTwoFactor(
+            @RequestBody @Valid VerifyTwoFactorRequestDTO verifyTwoFactorRequestDTO,
+            HttpServletRequest request) {
+        AuditContext.setActorEmail(request, verifyTwoFactorRequestDTO.email());
+        var response = authService.verifyTwoFactor(verifyTwoFactorRequestDTO);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<LoginResponseDTO> forgotPassword(
+            @RequestBody @Valid ForgotPasswordRequestDTO forgotPasswordRequestDTO,
+            HttpServletRequest request) {
+        AuditContext.setActorEmail(request, forgotPasswordRequestDTO.email());
+        var response = authService.forgotPassword(forgotPasswordRequestDTO);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<LoginResponseDTO> resetPassword(
+            @RequestBody @Valid ResetPasswordRequestDTO resetPasswordRequestDTO,
+            HttpServletRequest request) {
+        AuditContext.setActorEmail(request, resetPasswordRequestDTO.email());
+        var response = authService.resetPassword(resetPasswordRequestDTO);
+        return ResponseEntity.ok(response);
+    }
+}

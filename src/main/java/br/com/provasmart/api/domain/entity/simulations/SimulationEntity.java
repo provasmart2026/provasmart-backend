@@ -1,5 +1,6 @@
 package br.com.provasmart.api.domain.entity.simulations;
 
+import br.com.provasmart.api.domain.entity.users.UserEntity;
 import br.com.provasmart.api.domain.enums.SimulationStatusEnum;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -24,8 +25,9 @@ public class SimulationEntity {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(name = "student_id", nullable = false, updatable = false)
-    private UUID studentId;
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "student_id", nullable = false, updatable = false)
+    private UserEntity student;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)

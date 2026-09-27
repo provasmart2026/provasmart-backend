@@ -11,7 +11,7 @@ import java.util.UUID;
 @Repository
 public interface ISimulationRepository extends JpaRepository<SimulationEntity, UUID> {
 
-    boolean existsByStudentIdAndStatus(UUID studentID, SimulationStatusEnum status);
+    boolean existsByStudent_IdAndStatus(UUID studentId, SimulationStatusEnum status);
 
-    Optional<SimulationEntity> findByStudentIdAndStatus(UUID studentID, SimulationStatusEnum  status);
+    Optional<SimulationEntity> findByIdAndStudent_Id(UUID simulationId, UUID studentId);
 }

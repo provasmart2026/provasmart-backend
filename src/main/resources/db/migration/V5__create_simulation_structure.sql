@@ -4,7 +4,9 @@ CREATE TABLE simulations
     student_id  UUID        NOT NULL,
     status      VARCHAR(20) NOT NULL,
     started_at  TIMESTAMP   NOT NULL,
-    finished_at TIMESTAMP
+    finished_at TIMESTAMP,
+
+    CONSTRAINT fk_simulations_student FOREIGN KEY (student_id) REFERENCES users (id)
 );
 
 CREATE TABLE simulation_questions

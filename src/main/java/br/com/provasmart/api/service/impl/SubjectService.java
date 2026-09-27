@@ -4,6 +4,8 @@ import br.com.provasmart.api.domain.entity.questions.DisciplineEntity;
 import br.com.provasmart.api.domain.entity.questions.SubjectEntity;
 import br.com.provasmart.api.dto.request.question.SubjectRequestDTO;
 import br.com.provasmart.api.dto.response.question.SubjectResponseDTO;
+import br.com.provasmart.api.exception.ConflictException;
+import br.com.provasmart.api.exception.NotFoundException;
 import br.com.provasmart.api.mapper.question.ISubjectMapper;
 import br.com.provasmart.api.repository.questions.ISubjectRepository;
 import br.com.provasmart.api.service.IDisciplineService;
@@ -22,7 +24,7 @@ public class SubjectService implements ISubjectService {
 
     private final ISubjectRepository subjectRepository;
     private final ISubjectMapper subjectMapper;
-    private  final IDisciplineService disciplineService;
+    private final IDisciplineService disciplineService;
 
     @Override
     public List<SubjectResponseDTO> findAllByDiscipline(UUID disciplineId) {
@@ -47,7 +49,7 @@ public class SubjectService implements ISubjectService {
         return subjectRepository.findById(subjectId)
                 .orElseThrow(() -> {
                     log.error("Subject not found for id: {}", subjectId);
-                    return new IllegalArgumentException("Subject not found for id: " + subjectId);
+                    return new NotFoundException("Assunto não encontrado.");
                 });
     }
 
@@ -86,7 +88,7 @@ public class SubjectService implements ISubjectService {
 
         if (alreadyExists) {
             log.error("Subject with name '{}' already exists for disciplineId: {}", name, disciplineId);
-            throw new IllegalArgumentException("Subject with name '" + name + "' already exists for this discipline.");
+            throw new ConflictException("Já existe um assunto com este nome para esta disciplina.");
         }
     }
 }

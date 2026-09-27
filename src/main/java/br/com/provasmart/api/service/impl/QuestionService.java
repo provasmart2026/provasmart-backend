@@ -5,6 +5,8 @@ import br.com.provasmart.api.domain.entity.questions.QuestionEntity;
 import br.com.provasmart.api.domain.entity.questions.SubjectEntity;
 import br.com.provasmart.api.dto.request.question.QuestionRequestDTO;
 import br.com.provasmart.api.dto.response.question.QuestionResponseDTO;
+import br.com.provasmart.api.exception.BadRequestException;
+import br.com.provasmart.api.exception.NotFoundException;
 import br.com.provasmart.api.mapper.question.IAlternativeMapper;
 import br.com.provasmart.api.mapper.question.IQuestionMapper;
 import br.com.provasmart.api.repository.questions.IQuestionRepository;
@@ -118,14 +120,9 @@ public class QuestionService implements IQuestionService {
                 .count();
 
         if (correctAlternatives != 1) {
-            log.error(
-                    "Question must have exactly one correct alternative. Found: {}",
-                    correctAlternatives
-            );
+            log.error("Question must have exactly one correct alternative. Found: {}", correctAlternatives);
 
-            throw new IllegalArgumentException(
-                    "A questão deve possuir exatamente uma alternativa correta"
-            );
+            throw new BadRequestException("A questão deve possuir exatamente uma alternativa correta.");
         }
     }
 
@@ -141,9 +138,7 @@ public class QuestionService implements IQuestionService {
 
         if (!expectedLetters.equals(receivedLetters)) {
             log.error("Alternative letters must be: {}. Found: {}", expectedLetters, receivedLetters);
-            throw new IllegalArgumentException(
-                    "As letras das alternativas devem ser: A, B, C, D e E"
-            );
+            throw new BadRequestException("As letras das alternativas devem ser: A, B, C, D e E.");
         }
     }
 
@@ -151,9 +146,7 @@ public class QuestionService implements IQuestionService {
         log.info("Fetching question entity for id: {}", id);
 
         return questionRepository.findOneById(id)
-                .orElseThrow(() ->
-                        new IllegalArgumentException("Question not found")
-                );
+                .orElseThrow(() -> new NotFoundException("Questão não encontrada."));
     }
 
     private void updateAlternatives(QuestionRequestDTO requestDTO, QuestionEntity questionEntity) {
@@ -169,9 +162,7 @@ public class QuestionService implements IQuestionService {
         return questionEntity.getAlternatives().stream()
                 .filter(alternative -> alternative.getLetter().equalsIgnoreCase(letter))
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "Alternative not found for letter: " + letter
-                ));
+                .orElseThrow(() -> new NotFoundException("Alternativa não encontrada para a letra: " + letter + "."));
     }
 
     private void mapToEntityUpdate(QuestionRequestDTO requestDTO, SubjectEntity subject, QuestionEntity questionEntity) {

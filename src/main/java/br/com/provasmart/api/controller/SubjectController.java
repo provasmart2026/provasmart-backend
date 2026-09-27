@@ -2,6 +2,7 @@ package br.com.provasmart.api.controller;
 
 import br.com.provasmart.api.dto.request.question.SubjectRequestDTO;
 import br.com.provasmart.api.dto.response.question.SubjectResponseDTO;
+import br.com.provasmart.api.service.ISubjectService;
 import br.com.provasmart.api.service.impl.SubjectService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +18,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class SubjectController {
 
-    private final SubjectService subjectService;
+    private final ISubjectService subjectService;
 
     @GetMapping("/discipline/{disciplineId}")
     public ResponseEntity<List<SubjectResponseDTO>> findAllByDiscipline(@PathVariable UUID disciplineId) {

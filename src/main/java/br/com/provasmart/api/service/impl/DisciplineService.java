@@ -3,6 +3,7 @@ package br.com.provasmart.api.service.impl;
 import br.com.provasmart.api.domain.enums.ExamAreaEnum;
 import br.com.provasmart.api.domain.entity.questions.DisciplineEntity;
 import br.com.provasmart.api.dto.response.question.DisciplineResponseDTO;
+import br.com.provasmart.api.exception.NotFoundException;
 import br.com.provasmart.api.mapper.question.IDisciplineMapper;
 import br.com.provasmart.api.repository.questions.IDisciplineRepository;
 import br.com.provasmart.api.service.IDisciplineService;
@@ -37,7 +38,10 @@ public class DisciplineService implements IDisciplineService {
     private DisciplineEntity getDisciplineEntity(UUID id) {
         log.info("Finding discipline by id: {}", id);
         return disciplineRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Discipline not found with id: " + id));
+                .orElseThrow(() -> {
+                    log.error("Discipline not found for id: {}", id);
+                    return new NotFoundException("Disciplina não encontrada.");
+                });
     }
 
     private List<DisciplineResponseDTO> getList(List<DisciplineEntity> disciplines) {

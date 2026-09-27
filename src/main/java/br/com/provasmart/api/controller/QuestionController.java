@@ -2,6 +2,7 @@ package br.com.provasmart.api.controller;
 
 import br.com.provasmart.api.dto.request.question.QuestionRequestDTO;
 import br.com.provasmart.api.dto.response.question.QuestionResponseDTO;
+import br.com.provasmart.api.service.IQuestionService;
 import br.com.provasmart.api.service.impl.QuestionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +19,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class QuestionController {
 
-    private final QuestionService questionService;
+    private final IQuestionService questionService;
 
     @PostMapping
     public ResponseEntity<QuestionResponseDTO> create(@RequestBody @Valid QuestionRequestDTO requestDTO) {
