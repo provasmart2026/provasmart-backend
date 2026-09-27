@@ -1,5 +1,7 @@
 package br.com.provasmart.api.config;
 
+import br.com.provasmart.api.audit.AuditAccessDeniedHandler;
+import br.com.provasmart.api.audit.AuditAuthenticationEntryPoint;
 import br.com.provasmart.api.domain.enums.RoleEnum;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -29,22 +31,29 @@ import java.util.List;
 public class SecurityConfig {
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http,
+                                                   AuditAuthenticationEntryPoint authenticationEntryPoint,
+                                                   AuditAccessDeniedHandler accessDeniedHandler) throws Exception {
         return http
                 .cors(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .formLogin(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
+                .exceptionHandling(exceptions -> exceptions
+                        .authenticationEntryPoint(authenticationEntryPoint)
+                        .accessDeniedHandler(accessDeniedHandler))
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(HttpMethod.POST, "/users").permitAll()
                         .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/auth/verify-2fa").permitAll()
                         .requestMatchers(HttpMethod.POST, "/auth/forgot-password").permitAll()
                         .requestMatchers(HttpMethod.POST, "/auth/reset-password").permitAll()
+                        .requestMatchers("/error").permitAll()
                         .requestMatchers(HttpMethod.GET, "/users/me").authenticated()
                         .requestMatchers(HttpMethod.PATCH, "/users/me/request-deletion").authenticated()
                         .requestMatchers(HttpMethod.GET, "/users", "/users/{id}").hasRole(RoleEnum.ADMIN.name())
+                        .requestMatchers(HttpMethod.GET, "/audit-logs").hasRole(RoleEnum.ADMIN.name())
                         .requestMatchers(HttpMethod.DELETE, "/users/{id}").hasRole(RoleEnum.ADMIN.name())
                         .requestMatchers(HttpMethod.PATCH, "/users/{id}/activate", "/users/{id}/deactivate")
                         .hasRole(RoleEnum.ADMIN.name())
@@ -57,7 +66,10 @@ public class SecurityConfig {
                         .hasAnyRole(RoleEnum.ADMIN.name(), RoleEnum.ESTUDANTE.name())
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth2 ->
-                        oauth2.jwt(jwtConfigurer -> jwtConfigurer.jwtAuthenticationConverter(jwtAuthenticationConverter())))
+                        oauth2.authenticationEntryPoint(authenticationEntryPoint)
+                                .accessDeniedHandler(accessDeniedHandler)
+                                .jwt(jwtConfigurer -> jwtConfigurer
+                                        .jwtAuthenticationConverter(jwtAuthenticationConverter())))
                 .build();
     }
 

@@ -1,9 +1,11 @@
 package br.com.provasmart.api.controller;
 
+import br.com.provasmart.api.audit.AuditContext;
 import br.com.provasmart.api.dto.request.user.UserRequestDTO;
 import br.com.provasmart.api.dto.response.user.UserResponseDTO;
 import br.com.provasmart.api.service.IUserService;
 import jakarta.validation.Valid;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -21,7 +23,9 @@ public class UserController {
     private final IUserService userService;
 
     @PostMapping
-    public ResponseEntity<UserResponseDTO> create(@RequestBody @Valid UserRequestDTO requestDTO) {
+    public ResponseEntity<UserResponseDTO> create(@RequestBody @Valid UserRequestDTO requestDTO,
+                                                  HttpServletRequest request) {
+        AuditContext.setActorEmail(request, requestDTO.email());
         var user = userService.create(requestDTO);
         var location = URI.create("/users/" + user.id());
         return ResponseEntity.created(location).body(user);
