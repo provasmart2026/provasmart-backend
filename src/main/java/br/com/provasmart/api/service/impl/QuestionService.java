@@ -34,7 +34,7 @@ public class QuestionService implements IQuestionService {
     private final IAlternativeMapper alternativeMapper;
 
     @Override
-    public QuestionResponseDTO createQuestion(QuestionRequestDTO requestDTO) {
+    public QuestionResponseDTO create(QuestionRequestDTO requestDTO) {
         log.info("Creating question with subjectId: {}", requestDTO.subjectId());
         validateCorrectAlternative(requestDTO);
         validateAlternativeLetters(requestDTO);
@@ -45,7 +45,7 @@ public class QuestionService implements IQuestionService {
     }
 
     @Override
-    public QuestionResponseDTO updateQuestion(UUID id, QuestionRequestDTO requestDTO) {
+    public QuestionResponseDTO update(UUID id, QuestionRequestDTO requestDTO) {
         log.info("Updating question with id: {}", id);
         validateCorrectAlternative(requestDTO);
         validateAlternativeLetters(requestDTO);
@@ -60,7 +60,7 @@ public class QuestionService implements IQuestionService {
     }
 
     @Override
-    public void desactiveQuestion(UUID id) {
+    public void deactivate(UUID id) {
         log.info("Deactivating question with id: {}", id);
         var questionEntity = getQuestionEntity(id);
         questionEntity.setActive(false);
@@ -69,7 +69,7 @@ public class QuestionService implements IQuestionService {
     }
 
     @Override
-    public void actovateQuestion(UUID id) {
+    public void activate(UUID id) {
         log.info("Activating question with id: {}", id);
         var questionEntity = getQuestionEntity(id);
         questionEntity.setActive(true);

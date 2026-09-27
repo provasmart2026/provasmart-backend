@@ -3,7 +3,6 @@ package br.com.provasmart.api.controller;
 import br.com.provasmart.api.dto.request.question.QuestionRequestDTO;
 import br.com.provasmart.api.dto.response.question.QuestionResponseDTO;
 import br.com.provasmart.api.service.IQuestionService;
-import br.com.provasmart.api.service.impl.QuestionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -23,7 +22,7 @@ public class QuestionController {
 
     @PostMapping
     public ResponseEntity<QuestionResponseDTO> create(@RequestBody @Valid QuestionRequestDTO requestDTO) {
-        var question = questionService.createQuestion(requestDTO);
+        var question = questionService.create(requestDTO);
         var location = URI.create("/questions/" + question.id());
         return ResponseEntity.created(location).body(question);
     }
@@ -31,19 +30,19 @@ public class QuestionController {
     @PutMapping("/{id}")
     public ResponseEntity<QuestionResponseDTO> update(@PathVariable UUID id,
                                                       @RequestBody @Valid QuestionRequestDTO requestDTO) {
-        var question = questionService.updateQuestion(id, requestDTO);
+        var question = questionService.update(id, requestDTO);
         return ResponseEntity.ok(question);
     }
 
     @PatchMapping("/{id}/deactivate")
     public ResponseEntity<Void> deactivate(@PathVariable UUID id) {
-        questionService.desactiveQuestion(id);
+        questionService.deactivate(id);
         return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{id}/activate")
     public ResponseEntity<Void> activate(@PathVariable UUID id) {
-        questionService.actovateQuestion(id);
+        questionService.activate(id);
         return ResponseEntity.noContent().build();
     }
 
