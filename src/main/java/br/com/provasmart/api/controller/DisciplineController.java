@@ -2,7 +2,7 @@ package br.com.provasmart.api.controller;
 
 import br.com.provasmart.api.domain.enums.ExamAreaEnum;
 import br.com.provasmart.api.dto.response.question.DisciplineResponseDTO;
-import br.com.provasmart.api.service.impl.DisciplineService;
+import br.com.provasmart.api.service.IDisciplineService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
