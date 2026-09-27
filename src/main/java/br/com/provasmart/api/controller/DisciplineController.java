@@ -17,7 +17,7 @@ import java.util.List;
 @RequestMapping("/disciplines")
 public class DisciplineController {
 
-    private  final DisciplineService disciplineService;
+    private  final IDisciplineService disciplineService;
 
     @GetMapping("/exam-area/{examArea}")
     public ResponseEntity<List<DisciplineResponseDTO>> findAllByExamArea(@PathVariable ExamAreaEnum examArea) {
