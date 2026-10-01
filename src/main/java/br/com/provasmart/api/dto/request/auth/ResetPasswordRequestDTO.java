@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 
 @Schema(description = "DTO para requisição de redefinição de senha")
 public record ResetPasswordRequestDTO(
@@ -19,6 +20,7 @@ public record ResetPasswordRequestDTO(
         String code,
 
         @NotBlank
+        @Size(min = 8, message = "a senha deve ter pelo menos 8 caracteres")
         @Pattern(regexp = "^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[^A-Za-z0-9]).+$",
                 message = "A senha deve possuir letra maiúscula, letra minúscula, número e caractere especial")
         @Schema(description = "Nova senha", example = "Senha@123")
