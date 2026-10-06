@@ -21,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
@@ -29,6 +30,8 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 @Slf4j
 public class AuthService implements IAuthService {
+
+    private static final int MAX_LOGIN_2FA_INVALID_ATTEMPTS = 5;
 
     private final IUserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -67,6 +70,7 @@ public class AuthService implements IAuthService {
     }
 
     @Override
+    @Transactional(noRollbackFor = BadRequestException.class)
     public TokenResponseDTO verifyTwoFactor(VerifyTwoFactorRequestDTO verifyTwoFactorRequestDTO) {
         log.info("Starting two-factor authentication code verification.");
 
@@ -78,6 +82,8 @@ public class AuthService implements IAuthService {
         var authenticationCode = findAuthenticationCode(user);
 
         validateCodeExpiration(authenticationCode);
+
+        validateAttemptLimit(authenticationCode);
 
         validateAuthenticationCode(verifyTwoFactorRequestDTO.code(), authenticationCode);
 
@@ -134,6 +140,14 @@ public class AuthService implements IAuthService {
         log.info("Password reset successfully");
         return new LoginResponseDTO("Senha redefinida com sucesso.");
     }
+
+    private void validateAttemptLimit(AuthenticationCodeEntity authenticationCode) {
+        if (authenticationCode.getInvalidAttempts() >= MAX_LOGIN_2FA_INVALID_ATTEMPTS) {
+            markUsedTrue(authenticationCode);
+            throw new BadRequestException("Limite de tentativas atingido. Faça login novamente para receber um novo código.");
+        }
+    }
+
 
     private void setNewPassword(UserEntity user, String encodedNewPassword) {
         log.info("Setting new password");
@@ -227,7 +241,7 @@ public class AuthService implements IAuthService {
     private AuthenticationCodeEntity findAuthenticationCode(UserEntity user) {
         log.info("Finding authentication code");
 
-        return authenticationCodeRepository.findFirstByUserAndPurposeAndUsedFalseOrderByCreatedAtDesc(user, AuthenticationCodePurposeEnum.LOGIN_2FA)
+        return authenticationCodeRepository.findTopByUserAndPurposeAndUsedFalseOrderByCreatedAtDesc(user, AuthenticationCodePurposeEnum.LOGIN_2FA)
                 .orElseThrow(() -> {
                     log.error("Two-factor authentication code not found.");
                     return new BadRequestException("Código de autenticação não encontrado.");
@@ -247,6 +261,16 @@ public class AuthService implements IAuthService {
         log.info("Validating two-factor authentication code.");
 
         if (!passwordEncoder.matches(code, authenticationCode.getCode())) {
+            if (authenticationCode.getPurpose() == AuthenticationCodePurposeEnum.LOGIN_2FA) {
+                authenticationCode.setInvalidAttempts(authenticationCode.getInvalidAttempts() + 1);
+                if (authenticationCode.getInvalidAttempts() >= MAX_LOGIN_2FA_INVALID_ATTEMPTS) {
+                    authenticationCode.setUsed(true);
+                }
+                save(authenticationCode);
+                if (Boolean.TRUE.equals(authenticationCode.getUsed())) {
+                    throw new BadRequestException("Limite de tentativas atingido. Faça login novamente para receber um novo código.");
+                }
+            }
             log.error("Invalid two-factor authentication code.");
             throw new BadRequestException("Código de autenticação inválido.");
         }
