@@ -25,6 +25,13 @@ public class SimulationController {
         return ResponseEntity.created(location).body(simulation);
     }
 
+    @GetMapping("/current")
+    public ResponseEntity<SimulationResponseDTO> findCurrent() {
+        return simulationService.findCurrent()
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.noContent().build());
+    }
+
     @GetMapping("/{simulationId}")
     public ResponseEntity<SimulationResponseDTO> findById(@PathVariable UUID simulationId) {
         var simulation = simulationService.findById(simulationId);
@@ -42,6 +49,12 @@ public class SimulationController {
     @PatchMapping("/{simulationId}/finish")
     public ResponseEntity<SimulationResponseDTO> finishSimulation(@PathVariable UUID simulationId) {
         var simulation = simulationService.finishSimulation(simulationId);
+        return ResponseEntity.ok(simulation);
+    }
+
+    @PatchMapping("/{simulationId}/cancel")
+    public ResponseEntity<SimulationResponseDTO> cancelSimulation(@PathVariable UUID simulationId) {
+        var simulation = simulationService.cancelSimulation(simulationId);
         return ResponseEntity.ok(simulation);
     }
 }
