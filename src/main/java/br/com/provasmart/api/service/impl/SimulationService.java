@@ -32,6 +32,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -139,6 +140,33 @@ public class SimulationService implements ISimulationService {
         var savedSimulation = save(simulationEntity);
 
         return mapToDto(savedSimulation);
+    }
+
+    @Override
+    public SimulationResponseDTO cancelSimulation(UUID simulationId) {
+        var studentId = getCurrentStudentId();
+
+        log.info("Cancelling simulation for ID {}", simulationId);
+
+        var simulationEntity = getSimulationById(simulationId, studentId);
+
+        validateSimulationIsInProgress(simulationEntity);
+
+        simulationEntity.setStatus(SimulationStatusEnum.CANCELADO);
+
+        var savedSimulation = save(simulationEntity);
+
+        return mapToDto(savedSimulation);
+    }
+
+    @Override
+    public Optional<SimulationResponseDTO> findCurrent() {
+        var studentId = getCurrentStudentId();
+
+        log.info("Finding simulation in progress for student with ID {}", studentId);
+
+        return simulationRepository.findByStudent_IdAndStatus(studentId, SimulationStatusEnum.EM_ANDAMENTO)
+                .map(this::mapToDto);
     }
 
     private UUID getCurrentStudentId() {
