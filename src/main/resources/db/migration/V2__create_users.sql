@@ -12,6 +12,8 @@ CREATE TABLE users
     privacy_version     VARCHAR(20)  NOT NULL,
     created_at          TIMESTAMP    NOT NULL,
     updated_at          TIMESTAMP,
+    deletion_requested  BOOLEAN NOT NULL,
+    deletion_requested_at TIMESTAMP,
 
     CONSTRAINT ck_users_email_normalized CHECK (email = LOWER(TRIM(email))),
     CONSTRAINT ck_users_role CHECK (role IN ('ADMIN', 'ESTUDANTE'))

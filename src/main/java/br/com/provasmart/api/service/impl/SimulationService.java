@@ -27,6 +27,7 @@ import br.com.provasmart.api.service.ISimulationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -63,6 +64,7 @@ public class SimulationService implements ISimulationService {
     private final ICurrentActorService currentActorService;
 
     @Override
+    @Transactional
     public SimulationResponseDTO create() {
         var studentId = getCurrentStudentId();
 
@@ -94,12 +96,13 @@ public class SimulationService implements ISimulationService {
     }
 
     @Override
+    @Transactional
     public SimulationResponseDTO answerQuestion(UUID simulationId, UUID simulationQuestionId, SimulationAnswerRequestDTO answerRequestDTO) {
         var studentId = getCurrentStudentId();
 
         log.info("Answering question with Id {} for simulation with ID {}", simulationQuestionId, simulationId);
 
-        var simulationEntity = getSimulationById(simulationId, studentId);
+        var simulationEntity = getSimulationForUpdate(simulationId, studentId);
 
         validateSimulationIsInProgress(simulationEntity);
 
@@ -124,16 +127,19 @@ public class SimulationService implements ISimulationService {
     }
 
     @Override
+    @Transactional
     public SimulationResponseDTO finishSimulation(UUID simulationId) {
         var studentId = getCurrentStudentId();
 
         log.info("Finishing simulation for ID {}", simulationId);
 
-        var simulationEntity = getSimulationById(simulationId, studentId);
+        var simulationEntity = getSimulationForUpdate(simulationId, studentId);
 
         validateSimulationIsInProgress(simulationEntity);
 
         validateAllQuestionsAnswered(simulationEntity);
+
+        correctAnswers(simulationEntity);
 
         finishSimulationEntity(simulationEntity);
 
@@ -143,12 +149,13 @@ public class SimulationService implements ISimulationService {
     }
 
     @Override
+    @Transactional
     public SimulationResponseDTO cancelSimulation(UUID simulationId) {
         var studentId = getCurrentStudentId();
 
         log.info("Cancelling simulation for ID {}", simulationId);
 
-        var simulationEntity = getSimulationById(simulationId, studentId);
+        var simulationEntity = getSimulationForUpdate(simulationId, studentId);
 
         validateSimulationIsInProgress(simulationEntity);
 
@@ -185,12 +192,32 @@ public class SimulationService implements ISimulationService {
         log.info("Validating if all questions have been answered for simulation with ID {}", simulationEntity.getId());
 
         var hasUnansweredQuestion = simulationEntity.getQuestions().stream()
-                .anyMatch(question -> question.getAnswer() == null);
+                .anyMatch(question -> question.getAnswer() == null
+                        || question.getAnswer().getSelectedAlternative() == null);
 
-        if (hasUnansweredQuestion) {
+        if (simulationEntity.getQuestions().size() != QUESTIONS_PER_AREA * ExamAreaEnum.values().length || hasUnansweredQuestion) {
             log.error("Not all questions have been answered for simulation with ID {}", simulationEntity.getId());
             throw new BadRequestException("Todas as questões devem ser respondidas antes de finalizar o simulado.");
         }
+    }
+
+    private void correctAnswers(SimulationEntity simulationEntity) {
+        if (simulationEntity.getQuestions().stream().anyMatch(question -> question.getCorrectAlternativeId() == null)) {
+            log.error("Simulation with ID {} has no preserved answer key", simulationEntity.getId());
+            throw new ConflictException("O simulado não possui gabarito preservado e não pode ser corrigido automaticamente.");
+        }
+
+        log.info("Correcting answers for simulation with ID {}", simulationEntity.getId());
+        simulationEntity.getQuestions().forEach(question -> {
+            var answer = question.getAnswer();
+            answer.setIsCorrect(question.getCorrectAlternativeId().equals(answer.getSelectedAlternative().getId()));
+        });
+    }
+
+    private SimulationEntity getSimulationForUpdate(UUID simulationId, UUID studentId) {
+        log.info("Locking simulation with ID {} for student with ID {}", simulationId, studentId);
+        return simulationRepository.findByIdAndStudentIdForUpdate(simulationId, studentId)
+                .orElseThrow(() -> new NotFoundException("Simulado não encontrado."));
     }
 
     private SimulationAnswerEntity saveAnswer(SimulationAnswerEntity answerEntity) {

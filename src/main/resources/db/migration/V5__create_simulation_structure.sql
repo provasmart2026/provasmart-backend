@@ -15,6 +15,7 @@ CREATE TABLE simulation_questions
     simulation_id UUID    NOT NULL,
     question_id   UUID    NOT NULL,
     position      INTEGER NOT NULL,
+    correct_alternative_id UUID,
 
     CONSTRAINT fk_simulation_question_simulation
         FOREIGN KEY (simulation_id)
@@ -24,6 +25,10 @@ CREATE TABLE simulation_questions
     CONSTRAINT fk_simulation_question_question
         FOREIGN KEY (question_id)
             REFERENCES questions (id),
+
+    CONSTRAINT fk_simulation_question_correct_alternative
+        FOREIGN KEY (correct_alternative_id)
+            REFERENCES alternatives (id),
 
     CONSTRAINT uk_simulation_question
         UNIQUE (simulation_id, question_id),
@@ -38,6 +43,7 @@ CREATE TABLE simulation_answers
     simulation_question_id  UUID      NOT NULL,
     selected_alternative_id UUID      NOT NULL,
     answered_at             TIMESTAMP NOT NULL,
+    is_correct              BOOLEAN,
 
     CONSTRAINT fk_simulation_answer_simulation_question
         FOREIGN KEY (simulation_question_id)

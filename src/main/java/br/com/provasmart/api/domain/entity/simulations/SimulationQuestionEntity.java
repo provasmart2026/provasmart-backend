@@ -35,6 +35,9 @@ public class SimulationQuestionEntity {
     @Column(name = "position", nullable = false)
     private Integer position;
 
+    @Column(name = "correct_alternative_id")
+    private UUID correctAlternativeId;
+
     @OneToOne(mappedBy = "simulationQuestion", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private SimulationAnswerEntity answer;
 

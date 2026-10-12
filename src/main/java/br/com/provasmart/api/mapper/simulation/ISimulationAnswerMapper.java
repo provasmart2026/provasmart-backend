@@ -11,6 +11,7 @@ import org.mapstruct.MappingTarget;
 public interface ISimulationAnswerMapper {
 
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "isCorrect", expression = "java((Boolean) null)")
     @Mapping(target = "simulationQuestion", source = "simulationQuestion")
     @Mapping(target = "selectedAlternative", source = "alternative")
     @Mapping(target = "answeredAt", expression = "java(java.time.LocalDateTime.now())")
