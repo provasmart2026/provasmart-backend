@@ -21,6 +21,11 @@ public interface ISimulationQuestionMapper {
     @Mapping(target = "position", source = "position")
     @Mapping(target = "answer", ignore = true)
     @Mapping(target = "correctAlternativeId", expression = "java(correctAlternativeId(question))")
+    @Mapping(target = "examAreaSnapshot", source = "question.subject.discipline.examArea")
+    @Mapping(target = "disciplineIdSnapshot", source = "question.subject.discipline.id")
+    @Mapping(target = "disciplineNameSnapshot", source = "question.subject.discipline.name")
+    @Mapping(target = "subjectIdSnapshot", source = "question.subject.id")
+    @Mapping(target = "subjectNameSnapshot", source = "question.subject.name")
     SimulationQuestionEntity toEntity(SimulationEntity simulation, QuestionEntity question, Integer position);
 
     @Mapping(target = "questionId", source = "entity.question.id")
