@@ -3,14 +3,9 @@ package br.com.provasmart.api.controller;
 import br.com.provasmart.api.dto.request.simulation.SimulationAnswerRequestDTO;
 import br.com.provasmart.api.dto.response.simulation.SimulationResponseDTO;
 import br.com.provasmart.api.service.ISimulationService;
-import br.com.provasmart.api.dto.response.error.ErrorResponseDTO;
 import br.com.provasmart.api.dto.response.simulation.performance.SimulationPerformanceResponseDTO;
 import br.com.provasmart.api.service.ISimulationPerformanceService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -48,21 +43,6 @@ public class SimulationController {
     }
 
     @GetMapping("/{simulationId}/performance")
-    @Operation(summary = "Consultar análise de desempenho do simulado",
-            description = "Retorna o resultado geral e o desempenho por área, disciplina e assunto de um simulado finalizado do estudante autenticado, incluindo todas as áreas empatadas no menor aproveitamento.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Análise de desempenho disponível",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = SimulationPerformanceResponseDTO.class))),
-            @ApiResponse(responseCode = "401", description = "Autenticação necessária", content = @Content),
-            @ApiResponse(responseCode = "403", description = "Acesso permitido apenas ao perfil ESTUDANTE", content = @Content),
-            @ApiResponse(responseCode = "404", description = "Simulado não encontrado para o estudante",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponseDTO.class))),
-            @ApiResponse(responseCode = "409", description = "Simulado não finalizado ou sem classificação preservada ou correção suficiente para análise",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponseDTO.class)))
-    })
     public ResponseEntity<SimulationPerformanceResponseDTO> findPerformanceById(@PathVariable UUID simulationId) {
         var performance = simulationPerformanceService.findById(simulationId);
         return ResponseEntity.ok(performance);
