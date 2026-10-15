@@ -64,6 +64,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/subjects/**").hasRole(RoleEnum.ADMIN.name())
                         .requestMatchers(HttpMethod.GET, "/subjects/**")
                         .hasAnyRole(RoleEnum.ADMIN.name(), RoleEnum.ESTUDANTE.name())
+                        .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth2 ->
                         oauth2.authenticationEntryPoint(authenticationEntryPoint)

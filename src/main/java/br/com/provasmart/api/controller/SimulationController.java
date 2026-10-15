@@ -3,6 +3,9 @@ package br.com.provasmart.api.controller;
 import br.com.provasmart.api.dto.request.simulation.SimulationAnswerRequestDTO;
 import br.com.provasmart.api.dto.response.simulation.SimulationResponseDTO;
 import br.com.provasmart.api.service.ISimulationService;
+import br.com.provasmart.api.dto.response.simulation.performance.SimulationPerformanceResponseDTO;
+import br.com.provasmart.api.service.ISimulationPerformanceService;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +20,7 @@ import java.util.UUID;
 public class SimulationController {
 
     private final ISimulationService simulationService;
+    private final ISimulationPerformanceService simulationPerformanceService;
 
     @PostMapping
     public ResponseEntity<SimulationResponseDTO> create() {
@@ -36,6 +40,12 @@ public class SimulationController {
     public ResponseEntity<SimulationResponseDTO> findById(@PathVariable UUID simulationId) {
         var simulation = simulationService.findById(simulationId);
         return ResponseEntity.ok(simulation);
+    }
+
+    @GetMapping("/{simulationId}/performance")
+    public ResponseEntity<SimulationPerformanceResponseDTO> findPerformanceById(@PathVariable UUID simulationId) {
+        var performance = simulationPerformanceService.findById(simulationId);
+        return ResponseEntity.ok(performance);
     }
 
     @PutMapping("/{simulationId}/questions/{simulationQuestionId}/answer")
