@@ -40,6 +40,9 @@ public class AuthenticationCodeEntity {
     @Column(name = "used", nullable = false)
     private Boolean used;
 
+    @Column(name = "invalid_attempts", nullable = false)
+    private int invalidAttempts;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

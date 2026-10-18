@@ -5,7 +5,6 @@ import br.com.provasmart.api.domain.entity.practice.DirectedPracticeEntity;
 import br.com.provasmart.api.domain.entity.practice.DirectedPracticeQuestionEntity;
 import br.com.provasmart.api.domain.entity.questions.QuestionEntity;
 import br.com.provasmart.api.domain.entity.simulations.SimulationEntity;
-import br.com.provasmart.api.domain.entity.simulations.SimulationQuestionEntity;
 import br.com.provasmart.api.domain.enums.DirectedPracticeStatus;
 import br.com.provasmart.api.domain.enums.ExamAreaEnum;
 import br.com.provasmart.api.domain.enums.SimulationStatusEnum;
@@ -19,13 +18,13 @@ import br.com.provasmart.api.repository.questions.IQuestionRepository;
 import br.com.provasmart.api.repository.simulations.ISimulationRepository;
 import br.com.provasmart.api.repository.users.IUserRepository;
 import br.com.provasmart.api.service.ICurrentActorService;
+import br.com.provasmart.api.service.ISimulationPerformanceService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -45,6 +44,7 @@ public class DirectedPracticeService {
     private final IQuestionRepository questionRepository;
     private final IUserRepository userRepository;
     private final ICurrentActorService currentActorService;
+    private final ISimulationPerformanceService simulationPerformanceService;
 
     @Transactional
     public DirectedPracticeDTO create() {
@@ -55,7 +55,7 @@ public class DirectedPracticeService {
             throw new ConflictException("Já existe uma prática direcionada em andamento.");
         }
         SimulationEntity simulation = simulationRepository
-                .findFirstByStudent_IdAndStatusOrderByFinishedAtDesc(studentId, SimulationStatusEnum.FINALIZADO)
+                .findFirstByStudent_IdAndStatusOrderByFinishedAtDescIdDesc(studentId, SimulationStatusEnum.FINALIZADO)
                 .orElseThrow(() -> new ConflictException("Finalize um Simulado Geral antes de iniciar a prática direcionada."));
         ExamAreaEnum area = selectWeakestArea(simulation, studentId);
         List<QuestionEntity> pool = questionRepository.findAllByActiveTrueAndSubjectDisciplineExamArea(area);
@@ -154,16 +154,12 @@ public class DirectedPracticeService {
     }
 
     private ExamAreaEnum selectWeakestArea(SimulationEntity simulation, UUID studentId) {
-        return Arrays.stream(ExamAreaEnum.values()).min(Comparator
-                .comparingDouble((ExamAreaEnum area) -> simulation.getQuestions().stream()
-                        .filter(question -> question.getQuestion().getSubject().getDiscipline().getExamArea() == area)
-                        .mapToInt(question -> question.getAnswer() != null
-                                && question.getAnswer().getSelectedAlternative().isCorrect() ? 1 : 0)
-                        .average().orElse(1.0))
-                .thenComparingLong(area -> practiceRepository.countByStudent_IdAndArea(studentId, area))
+        return simulationPerformanceService.findById(simulation.getId()).worstAreas().stream().min(Comparator
+                .comparingLong((ExamAreaEnum area) -> practiceRepository.countByStudent_IdAndArea(studentId, area))
                 .thenComparing(area -> practiceRepository.findFirstByStudent_IdAndAreaOrderByStartedAtDesc(studentId, area)
                         .map(DirectedPracticeEntity::getStartedAt).orElse(LocalDateTime.MIN))
-                .thenComparingInt(Enum::ordinal)).orElseThrow();
+                .thenComparingInt(Enum::ordinal))
+                .orElseThrow(() -> new ConflictException("O simulado não possui áreas para prática direcionada."));
     }
 
     private DirectedPracticeQuestionEntity snapshot(DirectedPracticeEntity practice, QuestionEntity original, int position) {

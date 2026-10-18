@@ -7,13 +7,12 @@ import br.com.provasmart.api.domain.entity.questions.AlternativeEntity;
 import br.com.provasmart.api.domain.entity.questions.DisciplineEntity;
 import br.com.provasmart.api.domain.entity.questions.QuestionEntity;
 import br.com.provasmart.api.domain.entity.questions.SubjectEntity;
-import br.com.provasmart.api.domain.entity.simulations.SimulationAnswerEntity;
 import br.com.provasmart.api.domain.entity.simulations.SimulationEntity;
-import br.com.provasmart.api.domain.entity.simulations.SimulationQuestionEntity;
 import br.com.provasmart.api.domain.entity.users.UserEntity;
 import br.com.provasmart.api.domain.enums.DirectedPracticeStatus;
 import br.com.provasmart.api.domain.enums.ExamAreaEnum;
 import br.com.provasmart.api.domain.enums.SimulationStatusEnum;
+import br.com.provasmart.api.dto.response.simulation.performance.SimulationPerformanceResponseDTO;
 import br.com.provasmart.api.exception.BadRequestException;
 import br.com.provasmart.api.exception.ConflictException;
 import br.com.provasmart.api.exception.NotFoundException;
@@ -22,6 +21,7 @@ import br.com.provasmart.api.repository.questions.IQuestionRepository;
 import br.com.provasmart.api.repository.simulations.ISimulationRepository;
 import br.com.provasmart.api.repository.users.IUserRepository;
 import br.com.provasmart.api.service.ICurrentActorService;
+import br.com.provasmart.api.service.ISimulationPerformanceService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -43,6 +43,7 @@ class DirectedPracticeServiceTest {
     @Mock IQuestionRepository questions;
     @Mock IUserRepository users;
     @Mock ICurrentActorService actor;
+    @Mock ISimulationPerformanceService performance;
     @InjectMocks DirectedPracticeService service;
 
     private final UUID studentId = UUID.randomUUID();
@@ -52,7 +53,7 @@ class DirectedPracticeServiceTest {
         when(actor.getCurrentUserId()).thenReturn(studentId);
         when(users.findByIdForUpdate(studentId)).thenReturn(Optional.of(new UserEntity()));
         assertThrows(ConflictException.class, service::create);
-        verify(simulations).findFirstByStudent_IdAndStatusOrderByFinishedAtDesc(studentId, SimulationStatusEnum.FINALIZADO);
+        verify(simulations).findFirstByStudent_IdAndStatusOrderByFinishedAtDescIdDesc(studentId, SimulationStatusEnum.FINALIZADO);
         verify(practices, never()).saveAndFlush(any());
     }
 
@@ -71,23 +72,14 @@ class DirectedPracticeServiceTest {
         student.setId(studentId);
         var simulation = new SimulationEntity();
         simulation.setId(UUID.randomUUID());
-        for (var area : ExamAreaEnum.values()) {
-            for (int i = 0; i < 10; i++) {
-                var question = question(area);
-                var entry = new SimulationQuestionEntity();
-                entry.setQuestion(question);
-                var answer = new SimulationAnswerEntity();
-                answer.setSelectedAlternative(question.getAlternatives().get(area == ExamAreaEnum.MATEMATICA ? 1 : 0));
-                entry.setAnswer(answer);
-                simulation.getQuestions().add(entry);
-            }
-        }
         List<QuestionEntity> pool = new ArrayList<>();
         for (int i = 0; i < 20; i++) pool.add(question(ExamAreaEnum.MATEMATICA));
         when(actor.getCurrentUserId()).thenReturn(studentId);
         when(users.findByIdForUpdate(studentId)).thenReturn(Optional.of(student));
-        when(simulations.findFirstByStudent_IdAndStatusOrderByFinishedAtDesc(studentId, SimulationStatusEnum.FINALIZADO))
+        when(simulations.findFirstByStudent_IdAndStatusOrderByFinishedAtDescIdDesc(studentId, SimulationStatusEnum.FINALIZADO))
                 .thenReturn(Optional.of(simulation));
+        when(performance.findById(simulation.getId())).thenReturn(new SimulationPerformanceResponseDTO(
+                simulation.getId(), null, List.of(ExamAreaEnum.MATEMATICA), List.of()));
         when(questions.findAllByActiveTrueAndSubjectDisciplineExamArea(ExamAreaEnum.MATEMATICA)).thenReturn(pool);
         when(practices.saveAndFlush(any())).thenAnswer(invocation -> {
             DirectedPracticeEntity saved = invocation.getArgument(0);
