@@ -19,7 +19,7 @@ public interface IStudyPlanRepository extends JpaRepository<StudyPlanEntity, UUI
 
     boolean existsBySimulation_Id(UUID simulationId);
 
-    Page<StudyPlanEntity> findByStudent_Id(UUID studentId, Pageable pageable);
+    Page<StudyPlanEntity> findByStudent_IdOrderByCreatedAtDesc(UUID studentId, Pageable pageable);
 
-    Page<StudyPlanEntity> findByStudent_IdAndStatus(UUID studentId, StudyPlanStatusEnum status, Pageable pageable);
+    Page<StudyPlanEntity> findByStudent_IdAndStatusOrderByCreatedAtDesc(UUID studentId, StudyPlanStatusEnum status, Pageable pageable);
 }
