@@ -12,6 +12,8 @@ public interface ISimulationService {
 
     Optional<SimulationResponseDTO> findCurrent();
 
+    SimulationResponseDTO findLatestFinished();
+
     SimulationResponseDTO findById(UUID simulationId);
 
     SimulationResponseDTO answerQuestion(UUID simulationId, UUID simulationQuestionId, SimulationAnswerRequestDTO answerRequestDTO);
