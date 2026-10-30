@@ -21,6 +21,9 @@ public interface IUserMapper {
     @Mapping(target = "privacyVersion", constant = "1.0")
     @Mapping(target = "createdAt", expression = "java(java.time.LocalDateTime.now())")
     @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "deletionRequestedAt", ignore = true)
+    @Mapping(target = "authenticationCodes", ignore = true)
+    @Mapping(target = "simulations", ignore = true)
     UserEntity toEntity(UserRequestDTO userRequestDTO);
 
     UserResponseDTO toResponseDTO(UserEntity userEntity);
