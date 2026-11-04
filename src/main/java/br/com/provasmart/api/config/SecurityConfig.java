@@ -60,6 +60,7 @@ public class SecurityConfig {
                         .requestMatchers("/questions/**").hasRole(RoleEnum.ADMIN.name())
                         .requestMatchers("/simulations/**").hasRole(RoleEnum.ESTUDANTE.name())
                         .requestMatchers("/study-plans/**").hasRole(RoleEnum.ESTUDANTE.name())
+                        .requestMatchers("/directed-practices", "/directed-practices/**").hasRole(RoleEnum.ESTUDANTE.name())
                         .requestMatchers(HttpMethod.GET, "/exam-areas/**", "/disciplines/**")
                         .hasAnyRole(RoleEnum.ADMIN.name(), RoleEnum.ESTUDANTE.name())
                         .requestMatchers(HttpMethod.POST, "/subjects/**").hasRole(RoleEnum.ADMIN.name())
