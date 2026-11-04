@@ -36,6 +36,11 @@ public class SimulationController {
                 .orElseGet(() -> ResponseEntity.noContent().build());
     }
 
+    @GetMapping("/latest-finished")
+    public ResponseEntity<SimulationResponseDTO> findLatestFinished() {
+        return ResponseEntity.ok(simulationService.findLatestFinished());
+    }
+
     @GetMapping("/{simulationId}")
     public ResponseEntity<SimulationResponseDTO> findById(@PathVariable UUID simulationId) {
         var simulation = simulationService.findById(simulationId);

@@ -176,6 +176,24 @@ public class SimulationService implements ISimulationService {
                 .map(this::mapToDto);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public SimulationResponseDTO findLatestFinished() {
+        log.info("Fetching latest finished simulation");
+        var studentId = getCurrentStudentId();
+        var simulation = getLatestFinishedSimulation(studentId);
+
+        return simulationMapper.toDTO(simulation);
+    }
+
+    private SimulationEntity getLatestFinishedSimulation(UUID studentId) {
+        log.info("Retrieving latest finished simulation");
+        return simulationRepository.findFirstByStudent_IdAndStatusOrderByFinishedAtDescIdDesc(
+                        studentId, SimulationStatusEnum.FINALIZADO)
+                .orElseThrow(() -> new NotFoundException(
+                        "Nenhum Simulado Geral finalizado foi encontrado."));
+    }
+
     private UUID getCurrentStudentId() {
         log.info("Getting current student ID");
         return currentActorService.getCurrentUserId();

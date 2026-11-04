@@ -6,15 +6,19 @@ import br.com.provasmart.api.exception.ConflictException;
 import br.com.provasmart.api.exception.NotFoundException;
 import br.com.provasmart.api.exception.UnauthorizedException;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.time.LocalDateTime;
+import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
 
     @ExceptionHandler(BadRequestException.class)
     public ResponseEntity<ErrorResponseDTO> handleBadRequestException(BadRequestException exception,
@@ -44,5 +48,16 @@ public class GlobalExceptionHandler {
                                                               HttpServletRequest request) {
         var response = new ErrorResponseDTO( LocalDateTime.now(),status.value(),status.getReasonPhrase(),message,request.getRequestURI());
         return ResponseEntity.status(status).body(response);
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErrorResponseDTO> handleValidationException(MethodArgumentNotValidException exception,
+                                                                      HttpServletRequest request) {
+        var message = exception.getBindingResult().getFieldErrors().stream()
+                .map(DefaultMessageSourceResolvable::getDefaultMessage)
+                .distinct()
+                .collect(Collectors.joining("; "));
+
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, message, request);
     }
 }

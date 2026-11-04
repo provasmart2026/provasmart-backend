@@ -15,6 +15,9 @@ public interface ISimulationRepository extends JpaRepository<SimulationEntity, U
 
     Optional<SimulationEntity> findByStudent_IdAndStatus(UUID studentId, SimulationStatusEnum status);
 
+    Optional<SimulationEntity> findFirstByStudent_IdAndStatusOrderByFinishedAtDescIdDesc(
+            UUID studentId, SimulationStatusEnum status);
+
     boolean existsByStudent_IdAndStatus(UUID studentId, SimulationStatusEnum status);
 
     Optional<SimulationEntity> findByIdAndStudent_Id(UUID simulationId, UUID studentId);
