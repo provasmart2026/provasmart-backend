@@ -9,12 +9,14 @@ import br.com.provasmart.api.domain.entity.users.UserEntity;
 import br.com.provasmart.api.domain.enums.ExamAreaEnum;
 import br.com.provasmart.api.domain.enums.SimulationStatusEnum;
 import br.com.provasmart.api.dto.request.simulation.SimulationAnswerRequestDTO;
+import br.com.provasmart.api.dto.response.simulation.SimulationQuestionCorrectionResponseDTO;
 import br.com.provasmart.api.dto.response.simulation.SimulationResponseDTO;
 import br.com.provasmart.api.exception.BadRequestException;
 import br.com.provasmart.api.exception.ConflictException;
 import br.com.provasmart.api.exception.NotFoundException;
 import br.com.provasmart.api.mapper.simulation.ISimulationAnswerMapper;
 import br.com.provasmart.api.mapper.simulation.ISimulationMapper;
+import br.com.provasmart.api.mapper.simulation.ISimulationQuestionCorrectionMapper;
 import br.com.provasmart.api.mapper.simulation.ISimulationQuestionMapper;
 import br.com.provasmart.api.repository.questions.IAlternativeRepository;
 import br.com.provasmart.api.repository.questions.IQuestionRepository;
@@ -32,6 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -56,6 +59,8 @@ public class SimulationService implements ISimulationService {
     private final ISimulationMapper simulationMapper;
 
     private final ISimulationQuestionMapper simulationQuestionMapper;
+
+    private final ISimulationQuestionCorrectionMapper simulationQuestionCorrectionMapper;
 
     private final ISimulationAnswerMapper simulationAnswerMapper;
 
@@ -93,6 +98,20 @@ public class SimulationService implements ISimulationService {
         var simulationEntity = getSimulationById(simulationId, studentId);
 
         return mapToDto(simulationEntity);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<SimulationQuestionCorrectionResponseDTO> findCorrection(UUID simulationId) {
+        var simulation = getSimulationById(simulationId, getCurrentStudentId());
+        if (simulation.getStatus() != SimulationStatusEnum.FINALIZADO) {
+            throw new ConflictException("A correção está disponível apenas para simulados finalizados.");
+        }
+
+        return simulation.getQuestions().stream()
+                .sorted(Comparator.comparing(SimulationQuestionEntity::getPosition))
+                .map(simulationQuestionCorrectionMapper::toDTO)
+                .toList();
     }
 
     @Override

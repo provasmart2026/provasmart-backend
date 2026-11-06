@@ -1,6 +1,7 @@
 package br.com.provasmart.api.controller;
 
 import br.com.provasmart.api.dto.request.simulation.SimulationAnswerRequestDTO;
+import br.com.provasmart.api.dto.response.simulation.SimulationQuestionCorrectionResponseDTO;
 import br.com.provasmart.api.dto.response.simulation.SimulationResponseDTO;
 import br.com.provasmart.api.service.ISimulationService;
 import br.com.provasmart.api.dto.response.simulation.performance.SimulationPerformanceResponseDTO;
@@ -12,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -51,6 +53,12 @@ public class SimulationController {
     public ResponseEntity<SimulationPerformanceResponseDTO> findPerformanceById(@PathVariable UUID simulationId) {
         var performance = simulationPerformanceService.findById(simulationId);
         return ResponseEntity.ok(performance);
+    }
+
+    @GetMapping("/{simulationId}/correction")
+    @Operation(summary = "Consultar a correção por questão de um simulado finalizado")
+    public ResponseEntity<List<SimulationQuestionCorrectionResponseDTO>> findCorrection(@PathVariable UUID simulationId) {
+        return ResponseEntity.ok(simulationService.findCorrection(simulationId));
     }
 
     @PutMapping("/{simulationId}/questions/{simulationQuestionId}/answer")
