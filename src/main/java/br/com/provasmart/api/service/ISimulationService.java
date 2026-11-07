@@ -1,8 +1,10 @@
 package br.com.provasmart.api.service;
 
 import br.com.provasmart.api.dto.request.simulation.SimulationAnswerRequestDTO;
+import br.com.provasmart.api.dto.response.simulation.SimulationQuestionCorrectionResponseDTO;
 import br.com.provasmart.api.dto.response.simulation.SimulationResponseDTO;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -15,6 +17,8 @@ public interface ISimulationService {
     SimulationResponseDTO findLatestFinished();
 
     SimulationResponseDTO findById(UUID simulationId);
+
+    List<SimulationQuestionCorrectionResponseDTO> findCorrection(UUID simulationId);
 
     SimulationResponseDTO answerQuestion(UUID simulationId, UUID simulationQuestionId, SimulationAnswerRequestDTO answerRequestDTO);
 
