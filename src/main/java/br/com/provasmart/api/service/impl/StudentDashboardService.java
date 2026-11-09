@@ -8,6 +8,7 @@ import br.com.provasmart.api.domain.enums.DirectedPracticeStatus;
 import br.com.provasmart.api.domain.enums.ExamAreaEnum;
 import br.com.provasmart.api.domain.enums.SimulationStatusEnum;
 import br.com.provasmart.api.dto.response.dashboard.DashboardAreaPerformanceDTO;
+import br.com.provasmart.api.dto.response.dashboard.DashboardEvolutionPointDTO;
 import br.com.provasmart.api.dto.response.dashboard.StudentDashboardResponseDTO;
 import br.com.provasmart.api.repository.practice.IDirectedPracticeRepository;
 import br.com.provasmart.api.repository.simulations.ISimulationRepository;
@@ -18,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.UUID;
@@ -27,6 +29,8 @@ import java.util.stream.Collectors;
 @Slf4j
 @RequiredArgsConstructor
 public class StudentDashboardService implements IStudentDashboardService {
+
+    private static final int EVOLUTION_LIMIT = 10;
 
     private final ISimulationRepository simulationRepository;
     private final IDirectedPracticeRepository directedPracticeRepository;
@@ -73,21 +77,49 @@ public class StudentDashboardService implements IStudentDashboardService {
         var totalQuestions = areas.stream().mapToInt(DashboardAreaPerformanceDTO::totalQuestions).sum();
         var correctAnswers = areas.stream().mapToInt(DashboardAreaPerformanceDTO::correctAnswers).sum();
         return new StudentDashboardResponseDTO(practices.size(), totalQuestions, correctAnswers,
-                totalQuestions - correctAnswers, calculateAccuracyPercentage(correctAnswers, totalQuestions), areas);
+                totalQuestions - correctAnswers, calculateAccuracyPercentage(correctAnswers, totalQuestions), areas,
+                buildPracticeEvolution(practices));
     }
 
     private DashboardAreaPerformanceDTO buildPracticeAreaPerformance(ExamAreaEnum area,
                                                                     List<DirectedPracticeEntity> practices) {
         log.info("Counting directed practice answers: examArea={}, completedActivities={}", area, practices.size());
         var correctedQuestions = practices.stream()
-                .flatMap(practice -> practice.getQuestions().stream())
+                .flatMap(practice -> findCorrectedPracticeQuestions(practice).stream())
+                .toList();
+        var correctAnswers = countCorrectPracticeAnswers(correctedQuestions);
+        return buildAreaPerformance(area, correctedQuestions.size(), correctAnswers);
+    }
+
+    private List<DashboardEvolutionPointDTO> buildPracticeEvolution(List<DirectedPracticeEntity> practices) {
+        var points = practices.stream()
+                .filter(practice -> practice.getFinishedAt() != null)
+                .sorted(Comparator.comparing(DirectedPracticeEntity::getFinishedAt))
+                .map(this::buildPracticeEvolutionPoint)
+                .filter(point -> point.totalQuestions() > 0)
+                .toList();
+        return points.subList(Math.max(0, points.size() - EVOLUTION_LIMIT), points.size());
+    }
+
+    private DashboardEvolutionPointDTO buildPracticeEvolutionPoint(DirectedPracticeEntity practice) {
+        var correctedQuestions = findCorrectedPracticeQuestions(practice);
+        var totalQuestions = correctedQuestions.size();
+        var correctAnswers = countCorrectPracticeAnswers(correctedQuestions);
+        return new DashboardEvolutionPointDTO(practice.getFinishedAt(), totalQuestions, correctAnswers,
+                calculateAccuracyPercentage(correctAnswers, totalQuestions));
+    }
+
+    private List<DirectedPracticeQuestionEntity> findCorrectedPracticeQuestions(DirectedPracticeEntity practice) {
+        return practice.getQuestions().stream()
                 .filter(question -> question.getCorrectAtFinish() != null)
                 .toList();
-        var correctAnswers = Math.toIntExact(correctedQuestions.stream()
+    }
+
+    private int countCorrectPracticeAnswers(List<DirectedPracticeQuestionEntity> questions) {
+        return Math.toIntExact(questions.stream()
                 .map(DirectedPracticeQuestionEntity::getCorrectAtFinish)
                 .filter(Boolean.TRUE::equals)
                 .count());
-        return buildAreaPerformance(area, correctedQuestions.size(), correctAnswers);
     }
 
     private List<SimulationEntity> findCompletedSimulations(UUID studentId) {
@@ -98,15 +130,39 @@ public class StudentDashboardService implements IStudentDashboardService {
     private StudentDashboardResponseDTO buildSimulationDashboard(List<SimulationEntity> simulations) {
         log.info("Building simulation dashboard response: completedActivities={}", simulations.size());
         var correctedQuestions = simulations.stream()
-                .flatMap(simulation -> simulation.getQuestions().stream())
-                .filter(question -> question.getAnswer() != null && question.getAnswer().getIsCorrect() != null)
+                .flatMap(simulation -> findCorrectedSimulationQuestions(simulation).stream())
                 .toList();
 
         var totalQuestions = correctedQuestions.size();
         var correctAnswers = countCorrectAnswers(correctedQuestions);
         return new StudentDashboardResponseDTO(simulations.size(), totalQuestions,
                 correctAnswers, totalQuestions - correctAnswers,
-                calculateAccuracyPercentage(correctAnswers, totalQuestions), buildAreaPerformances(correctedQuestions));
+                calculateAccuracyPercentage(correctAnswers, totalQuestions), buildAreaPerformances(correctedQuestions),
+                buildSimulationEvolution(simulations));
+    }
+
+    private List<DashboardEvolutionPointDTO> buildSimulationEvolution(List<SimulationEntity> simulations) {
+        var points = simulations.stream()
+                .filter(simulation -> simulation.getFinishedAt() != null)
+                .sorted(Comparator.comparing(SimulationEntity::getFinishedAt))
+                .map(this::buildSimulationEvolutionPoint)
+                .filter(point -> point.totalQuestions() > 0)
+                .toList();
+        return points.subList(Math.max(0, points.size() - EVOLUTION_LIMIT), points.size());
+    }
+
+    private DashboardEvolutionPointDTO buildSimulationEvolutionPoint(SimulationEntity simulation) {
+        var correctedQuestions = findCorrectedSimulationQuestions(simulation);
+        var totalQuestions = correctedQuestions.size();
+        var correctAnswers = countCorrectAnswers(correctedQuestions);
+        return new DashboardEvolutionPointDTO(simulation.getFinishedAt(), totalQuestions, correctAnswers,
+                calculateAccuracyPercentage(correctAnswers, totalQuestions));
+    }
+
+    private List<SimulationQuestionEntity> findCorrectedSimulationQuestions(SimulationEntity simulation) {
+        return simulation.getQuestions().stream()
+                .filter(question -> question.getAnswer() != null && question.getAnswer().getIsCorrect() != null)
+                .toList();
     }
 
     private List<DashboardAreaPerformanceDTO> buildAreaPerformances(List<SimulationQuestionEntity> questions) {

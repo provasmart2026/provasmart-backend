@@ -22,6 +22,9 @@ public record StudentDashboardResponseDTO(
         Double accuracyPercentage,
 
         @Schema(description = "Desempenho acumulado por área do ENEM")
-        List<DashboardAreaPerformanceDTO> areas
+        List<DashboardAreaPerformanceDTO> areas,
+
+        @Schema(description = "Evolução do percentual de acertos por atividade finalizada")
+        List<DashboardEvolutionPointDTO> evolution
 ) {
 }
