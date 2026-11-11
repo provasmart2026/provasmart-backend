@@ -35,7 +35,7 @@ public class SimulationPerformanceService implements ISimulationPerformanceServi
     @Override
     @Transactional(readOnly = true)
     public SimulationPerformanceResponseDTO findById(UUID simulationId) {
-        log.info("Fetching simulation performance: simulationId={}", simulationId);
+        log.info("Fetching simulation performance.");
         var studentId = currentActorService.getCurrentUserId();
         var simulation = getSimulation(simulationId, studentId);
 
@@ -50,16 +50,14 @@ public class SimulationPerformanceService implements ISimulationPerformanceServi
         var worstAreas = findWorstAreas(areas);
         var response = buildResponse(simulation, summary, worstAreas, areas);
 
-        log.info("Simulation performance calculated: simulationId={}, totalQuestions={}, worstAreas={}",
-                simulation.getId(), totalQuestions, worstAreas);
+        log.info("Simulation performance calculated.");
         return response;
     }
 
     private SimulationPerformanceResponseDTO buildResponse(SimulationEntity simulation, SimulationPerformanceSummaryDTO summary,
                                                            List<ExamAreaEnum> worstAreas,
                                                            List<SimulationAreaPerformanceDTO> areas) {
-        log.info("Building simulation performance response: simulationId={}, totalAreas={}, worstAreas={}",
-                simulation.getId(), areas.size(), worstAreas);
+        log.info("Building simulation performance response.");
         return performanceMapper.toResponseDTO(simulation.getId(), summary, worstAreas, areas);
     }
 
@@ -70,13 +68,13 @@ public class SimulationPerformanceService implements ISimulationPerformanceServi
     }
 
     private SimulationEntity getSimulation(UUID simulationId, UUID studentId) {
-        log.info("Retrieving simulation: simulationId={}, studentId={}", simulationId, studentId);
+        log.info("Retrieving simulation.");
         return simulationRepository.findByIdAndStudent_Id(simulationId, studentId)
                 .orElseThrow(() -> new NotFoundException("Simulado não encontrado."));
     }
 
     private void validateSimulation(SimulationEntity simulation) {
-        log.info("Validating simulation performance availability: simulationId={}, status={}", simulation.getId(), simulation.getStatus());
+        log.info("Validating simulation performance availability.");
         if (simulation.getStatus() != SimulationStatusEnum.FINALIZADO) {
             throw new ConflictException("A análise está disponível apenas para simulados finalizados.");
         }
@@ -103,7 +101,7 @@ public class SimulationPerformanceService implements ISimulationPerformanceServi
     }
 
     private List<SimulationAreaPerformanceDTO> buildAreas(List<SimulationQuestionEntity> questions) {
-        log.info("Calculating area performance: totalQuestions={}", questions.size());
+        log.info("Calculating area performance.");
         return questions.stream()
                 .collect(Collectors.groupingBy(SimulationQuestionEntity::getExamAreaSnapshot))
                 .entrySet().stream()
@@ -120,7 +118,7 @@ public class SimulationPerformanceService implements ISimulationPerformanceServi
     }
 
     private List<SimulationDisciplinePerformanceDTO> buildDisciplines(ExamAreaEnum examArea, List<SimulationQuestionEntity> questions) {
-        log.info("Calculating discipline performance: examArea={}, totalQuestions={}", examArea, questions.size());
+        log.info("Calculating discipline performance.");
         return questions.stream()
                 .collect(Collectors.groupingBy(SimulationQuestionEntity::getDisciplineIdSnapshot))
                 .entrySet().stream()
@@ -139,7 +137,7 @@ public class SimulationPerformanceService implements ISimulationPerformanceServi
     }
 
     private List<SimulationSubjectPerformanceDTO> buildSubjects(UUID disciplineId, List<SimulationQuestionEntity> questions) {
-        log.info("Calculating subject performance: disciplineId={}, totalQuestions={}", disciplineId, questions.size());
+        log.info("Calculating subject performance.");
         return questions.stream()
                 .collect(Collectors.groupingBy(SimulationQuestionEntity::getSubjectIdSnapshot))
                 .entrySet().stream()
@@ -158,19 +156,19 @@ public class SimulationPerformanceService implements ISimulationPerformanceServi
     }
 
     private int countCorrectAnswers(List<SimulationQuestionEntity> questions) {
-        log.info("Counting correct answers: totalQuestions={}", questions.size());
+        log.info("Counting correct answers.");
         return (int) questions.stream()
                 .filter(question -> Boolean.TRUE.equals(question.getAnswer().getIsCorrect()))
                 .count();
     }
 
     private double accuracyPercentage(int correctAnswers, int totalQuestions) {
-        log.info("Calculating accuracy percentage: correctAnswers={}, totalQuestions={}", correctAnswers, totalQuestions);
+        log.info("Calculating accuracy percentage.");
         return correctAnswers * 100.0 / totalQuestions;
     }
 
     private List<ExamAreaEnum> findWorstAreas(List<SimulationAreaPerformanceDTO> areas) {
-        log.info("Identifying all lowest-performing areas: totalAreas={}", areas.size());
+        log.info("Identifying all lowest-performing areas.");
         var lowestCorrectAnswers = areas.stream()
                 .mapToInt(SimulationAreaPerformanceDTO::correctAnswers)
                 .min()
