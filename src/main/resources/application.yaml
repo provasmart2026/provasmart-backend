@@ -1,3 +1,7 @@
+audit:
+  retention-days: 90
+  cleanup-cron: '0 0 3 * * *'
+
 spring:
   application:
     name: api
