@@ -9,6 +9,7 @@ import br.com.provasmart.api.exception.ConflictException;
 import br.com.provasmart.api.exception.NotFoundException;
 import br.com.provasmart.api.mapper.user.IUserMapper;
 import br.com.provasmart.api.repository.users.IUserRepository;
+import br.com.provasmart.api.repository.studyplans.IStudyPlanRepository;
 import br.com.provasmart.api.service.ICurrentActorService;
 import br.com.provasmart.api.service.IUserService;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -33,10 +35,11 @@ public class UserService implements IUserService {
     private final PasswordEncoder passwordEncoder;
 
     private final ICurrentActorService currentActorService;
+    private final IStudyPlanRepository studyPlanRepository;
 
     @Override
     public UserResponseDTO create(UserRequestDTO userRequestDTO) {
-        log.info("Creating a new user with email: {}", userRequestDTO.email());
+        log.info("Creating a new user.");
 
         var normalizedEmail = normalizeEmail(userRequestDTO);
 
@@ -112,12 +115,16 @@ public class UserService implements IUserService {
     }
 
     @Override
+    @Transactional
     public void delete(UUID id) {
         log.info("Deleting user with id: {}", id);
         var userEntity = findUserById(id);
 
         validateUserIsNotAdmin(userEntity);
         validateDeletionRequested(userEntity);
+
+        studyPlanRepository.deleteByStudent_Id(id);
+        studyPlanRepository.flush();
 
         userRepository.delete(userEntity);
     }
@@ -153,7 +160,7 @@ public class UserService implements IUserService {
     }
 
     private UserEntity save(UserEntity userEntity) {
-        log.info("Saving user with email: {}", userEntity.getEmail());
+        log.info("Saving user.");
         return userRepository.save(userEntity);
     }
 
@@ -164,7 +171,7 @@ public class UserService implements IUserService {
 
     private void validateEmailExists(String normalizedEmail) {
         if (userRepository.existsByEmail(normalizedEmail)) {
-            log.error("User with email {} already exists.", normalizedEmail);
+            log.error("User creation rejected: email already registered.");
             throw new ConflictException("Usuário com este e-mail já existe.");
         }
     }

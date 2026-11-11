@@ -62,6 +62,12 @@ public class UserEntity {
     @Column(name = "privacy_version", nullable = false, length = 20)
     private String privacyVersion;
 
+    @Column(name = "age_declaration_accepted")
+    private Boolean ageDeclarationAccepted;
+
+    @Column(name = "age_declaration_accepted_at")
+    private LocalDateTime ageDeclarationAcceptedAt;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

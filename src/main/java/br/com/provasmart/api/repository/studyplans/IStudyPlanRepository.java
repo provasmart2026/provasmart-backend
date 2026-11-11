@@ -13,6 +13,8 @@ import java.util.UUID;
 @Repository
 public interface IStudyPlanRepository extends JpaRepository<StudyPlanEntity, UUID> {
 
+    void deleteByStudent_Id(UUID studentId);
+
     Optional<StudyPlanEntity> findByStudent_IdAndStatus(UUID studentId, StudyPlanStatusEnum status);
 
     Optional<StudyPlanEntity> findByIdAndStudent_Id(UUID studyPlanId, UUID studentId);
