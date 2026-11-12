@@ -3,12 +3,17 @@ package br.com.provasmart.api.service;
 import br.com.provasmart.api.dto.request.simulation.SimulationAnswerRequestDTO;
 import br.com.provasmart.api.dto.response.simulation.SimulationQuestionCorrectionResponseDTO;
 import br.com.provasmart.api.dto.response.simulation.SimulationResponseDTO;
+import br.com.provasmart.api.dto.response.simulation.SimulationSummaryResponseDTO;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 public interface ISimulationService {
+
+    Page<SimulationSummaryResponseDTO> findHistory(Pageable pageable);
 
     SimulationResponseDTO create();
 

@@ -3,6 +3,7 @@ package br.com.provasmart.api.controller;
 import br.com.provasmart.api.dto.request.simulation.SimulationAnswerRequestDTO;
 import br.com.provasmart.api.dto.response.simulation.SimulationQuestionCorrectionResponseDTO;
 import br.com.provasmart.api.dto.response.simulation.SimulationResponseDTO;
+import br.com.provasmart.api.dto.response.simulation.SimulationSummaryResponseDTO;
 import br.com.provasmart.api.service.ISimulationService;
 import br.com.provasmart.api.dto.response.simulation.performance.SimulationPerformanceResponseDTO;
 import br.com.provasmart.api.service.ISimulationPerformanceService;
@@ -10,6 +11,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -23,6 +27,13 @@ public class SimulationController {
 
     private final ISimulationService simulationService;
     private final ISimulationPerformanceService simulationPerformanceService;
+
+    @GetMapping("/history")
+    @Operation(summary = "Consultar histórico paginado dos simulados finalizados e cancelados do estudante")
+    public ResponseEntity<Page<SimulationSummaryResponseDTO>> findHistory(@PageableDefault(size = 10) Pageable pageable) {
+        var history = simulationService.findHistory(pageable);
+        return ResponseEntity.ok(history);
+    }
 
     @PostMapping
     public ResponseEntity<SimulationResponseDTO> create() {

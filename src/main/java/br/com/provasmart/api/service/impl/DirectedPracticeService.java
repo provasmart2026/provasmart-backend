@@ -10,6 +10,9 @@ import br.com.provasmart.api.domain.enums.ExamAreaEnum;
 import br.com.provasmart.api.domain.enums.SimulationStatusEnum;
 import br.com.provasmart.api.dto.practice.DirectedPracticeAnalysisDTO;
 import br.com.provasmart.api.dto.practice.DirectedPracticeDTO;
+import br.com.provasmart.api.dto.response.practice.DirectedPracticeSummaryResponseDTO;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import br.com.provasmart.api.exception.BadRequestException;
 import br.com.provasmart.api.exception.ConflictException;
 import br.com.provasmart.api.exception.NotFoundException;
@@ -149,6 +152,40 @@ public class DirectedPracticeService implements IDirectedPracticeService {
         }).toList();
         return new DirectedPracticeAnalysisDTO(practice.getId(), practice.getArea(), questions.size(), correct,
                 percentage(correct, questions.size()), disciplines, subjects, review);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<DirectedPracticeSummaryResponseDTO> findHistory(Pageable pageable) {
+        var studentId = currentActorService.getCurrentUserId();
+        var statuses = List.of(DirectedPracticeStatus.FINALIZADA, DirectedPracticeStatus.CANCELADA);
+        var practices = practiceRepository.findByStudent_IdAndStatusInOrderByStartedAtDescIdDesc(
+                studentId, statuses, pageable);
+        return practices.map(this::toHistorySummary);
+    }
+
+    private DirectedPracticeSummaryResponseDTO toHistorySummary(DirectedPracticeEntity practice) {
+        var totalQuestions = practice.getQuestions().size();
+        var answeredQuestions = findAnsweredQuestions(practice);
+        var answeredCount = answeredQuestions.size();
+        var finished = practice.getStatus() == DirectedPracticeStatus.FINALIZADA;
+        var correctAnswers = finished ? countCorrectAnswers(answeredQuestions) : null;
+        var incorrectAnswers = finished ? answeredCount - correctAnswers : null;
+        var accuracyPercentage = finished ? percentage(correctAnswers, answeredCount) : null;
+        return practiceMapper.toSummaryDTO(practice, totalQuestions, answeredCount,
+                correctAnswers, incorrectAnswers, accuracyPercentage);
+    }
+
+    private List<DirectedPracticeQuestionEntity> findAnsweredQuestions(DirectedPracticeEntity practice) {
+        return practice.getQuestions().stream()
+                .filter(question -> question.getSelectedAlternativeId() != null)
+                .toList();
+    }
+
+    private int countCorrectAnswers(List<DirectedPracticeQuestionEntity> questions) {
+        return Math.toIntExact(questions.stream()
+                .filter(question -> Boolean.TRUE.equals(question.getCorrectAtFinish()))
+                .count());
     }
 
     private ExamAreaEnum selectWeakestArea(SimulationEntity simulation, UUID studentId) {

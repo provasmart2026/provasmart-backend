@@ -3,6 +3,8 @@ package br.com.provasmart.api.repository.simulations;
 import br.com.provasmart.api.domain.entity.simulations.SimulationEntity;
 import br.com.provasmart.api.domain.enums.SimulationStatusEnum;
 import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -14,6 +16,9 @@ import java.util.UUID;
 
 @Repository
 public interface ISimulationRepository extends JpaRepository<SimulationEntity, UUID> {
+
+    Page<SimulationEntity> findByStudent_IdAndStatusInOrderByStartedAtDescIdDesc(UUID studentId, List<SimulationStatusEnum> statuses,
+                                                                                 Pageable pageable);
 
     Optional<SimulationEntity> findByStudent_IdAndStatus(UUID studentId, SimulationStatusEnum status);
 

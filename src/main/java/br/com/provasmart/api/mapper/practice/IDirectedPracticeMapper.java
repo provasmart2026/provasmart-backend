@@ -9,11 +9,13 @@ import br.com.provasmart.api.domain.entity.simulations.SimulationEntity;
 import br.com.provasmart.api.domain.entity.users.UserEntity;
 import br.com.provasmart.api.domain.enums.ExamAreaEnum;
 import br.com.provasmart.api.dto.practice.DirectedPracticeDTO;
+import br.com.provasmart.api.dto.response.practice.DirectedPracticeSummaryResponseDTO;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
 @Mapper(componentModel = "spring")
 public interface IDirectedPracticeMapper {
+
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "student", source = "student")
     @Mapping(target = "sourceSimulation", source = "simulation")
@@ -54,4 +56,18 @@ public interface IDirectedPracticeMapper {
     DirectedPracticeDTO.Question toDTO(DirectedPracticeQuestionEntity question);
 
     DirectedPracticeDTO.Alternative toDTO(DirectedPracticeAlternativeEntity alternative);
+
+    @Mapping(target = "id", source = "practice.id")
+    @Mapping(target = "area", source = "practice.area")
+    @Mapping(target = "status", source = "practice.status")
+    @Mapping(target = "startedAt", source = "practice.startedAt")
+    @Mapping(target = "finishedAt", source = "practice.finishedAt")
+    @Mapping(target = "totalQuestions", source = "totalQuestions")
+    @Mapping(target = "answeredQuestions", source = "answeredQuestions")
+    @Mapping(target = "correctAnswers", source = "correctAnswers")
+    @Mapping(target = "incorrectAnswers", source = "incorrectAnswers")
+    @Mapping(target = "accuracyPercentage", source = "accuracyPercentage")
+    DirectedPracticeSummaryResponseDTO toSummaryDTO(DirectedPracticeEntity practice, Integer totalQuestions,
+                                                    Integer answeredQuestions, Integer correctAnswers,
+                                                    Integer incorrectAnswers, Double accuracyPercentage);
 }
