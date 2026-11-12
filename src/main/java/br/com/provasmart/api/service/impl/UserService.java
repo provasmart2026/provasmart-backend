@@ -2,6 +2,7 @@ package br.com.provasmart.api.service.impl;
 
 import br.com.provasmart.api.domain.entity.users.UserEntity;
 import br.com.provasmart.api.domain.enums.RoleEnum;
+import br.com.provasmart.api.domain.enums.LegalDocumentTypeEnum;
 import br.com.provasmart.api.dto.request.user.UserRequestDTO;
 import br.com.provasmart.api.dto.response.user.UserResponseDTO;
 import br.com.provasmart.api.exception.BadRequestException;
@@ -9,14 +10,17 @@ import br.com.provasmart.api.exception.ConflictException;
 import br.com.provasmart.api.exception.NotFoundException;
 import br.com.provasmart.api.mapper.user.IUserMapper;
 import br.com.provasmart.api.repository.users.IUserRepository;
+import br.com.provasmart.api.repository.studyplans.IStudyPlanRepository;
 import br.com.provasmart.api.service.ICurrentActorService;
 import br.com.provasmart.api.service.IUserService;
+import br.com.provasmart.api.service.ILegalDocumentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -33,14 +37,18 @@ public class UserService implements IUserService {
     private final PasswordEncoder passwordEncoder;
 
     private final ICurrentActorService currentActorService;
+    private final IStudyPlanRepository studyPlanRepository;
+    private final ILegalDocumentService legalDocumentService;
 
     @Override
     public UserResponseDTO create(UserRequestDTO userRequestDTO) {
-        log.info("Creating a new user with email: {}", userRequestDTO.email());
+        log.info("Creating a new user.");
 
         var normalizedEmail = normalizeEmail(userRequestDTO);
 
         validateEmailExists(normalizedEmail);
+
+        validateLegalDocumentVersions(userRequestDTO);
 
         var userEntity = mapToEntity(userRequestDTO);
 
@@ -112,6 +120,7 @@ public class UserService implements IUserService {
     }
 
     @Override
+    @Transactional
     public void delete(UUID id) {
         log.info("Deleting user with id: {}", id);
         var userEntity = findUserById(id);
@@ -119,7 +128,20 @@ public class UserService implements IUserService {
         validateUserIsNotAdmin(userEntity);
         validateDeletionRequested(userEntity);
 
+        studyPlanRepository.deleteByStudent_Id(id);
+        studyPlanRepository.flush();
+
         userRepository.delete(userEntity);
+    }
+
+    private void validateLegalDocumentVersions(UserRequestDTO request) {
+        var terms = legalDocumentService.findCurrent(LegalDocumentTypeEnum.TERMOS_DE_USO);
+        var privacy = legalDocumentService.findCurrent(LegalDocumentTypeEnum.POLITICA_DE_PRIVACIDADE);
+
+        if (!terms.version().equals(request.termsVersion())
+                || !privacy.version().equals(request.privacyVersion())) {
+            throw new ConflictException("Os documentos legais foram atualizados. Consulte os termos e a política vigentes antes de concluir o cadastro.");
+        }
     }
 
     private void validateUserIsNotAdmin(UserEntity userEntity) {
@@ -153,7 +175,7 @@ public class UserService implements IUserService {
     }
 
     private UserEntity save(UserEntity userEntity) {
-        log.info("Saving user with email: {}", userEntity.getEmail());
+        log.info("Saving user.");
         return userRepository.save(userEntity);
     }
 
@@ -164,7 +186,7 @@ public class UserService implements IUserService {
 
     private void validateEmailExists(String normalizedEmail) {
         if (userRepository.existsByEmail(normalizedEmail)) {
-            log.error("User with email {} already exists.", normalizedEmail);
+            log.error("User creation rejected: email already registered.");
             throw new ConflictException("Usuário com este e-mail já existe.");
         }
     }

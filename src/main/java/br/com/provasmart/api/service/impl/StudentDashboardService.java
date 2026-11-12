@@ -40,11 +40,10 @@ public class StudentDashboardService implements IStudentDashboardService {
     @Transactional(readOnly = true)
     public StudentDashboardResponseDTO getSimulationDashboard() {
         var studentId = currentActorService.getCurrentUserId();
-        log.info("Fetching simulation dashboard: studentId={}", studentId);
+        log.info("Fetching simulation dashboard.");
         var simulations = findCompletedSimulations(studentId);
         var response = buildSimulationDashboard(simulations);
-        log.info("Simulation dashboard calculated: completedActivities={}, totalQuestions={}, totalAreas={}",
-                response.completedActivities(), response.totalQuestions(), response.areas().size());
+        log.info("Simulation dashboard calculated.");
         return response;
     }
 
@@ -52,21 +51,20 @@ public class StudentDashboardService implements IStudentDashboardService {
     @Transactional(readOnly = true)
     public StudentDashboardResponseDTO getDirectedPracticeDashboard() {
         var studentId = currentActorService.getCurrentUserId();
-        log.info("Fetching directed practice dashboard: studentId={}", studentId);
+        log.info("Fetching directed practice dashboard.");
         var practices = findCompletedPractices(studentId);
         var response = buildDirectedPracticeDashboard(practices);
-        log.info("Directed practice dashboard calculated: completedActivities={}, totalQuestions={}, totalAreas={}",
-                response.completedActivities(), response.totalQuestions(), response.areas().size());
+        log.info("Directed practice dashboard calculated.");
         return response;
     }
 
     private List<DirectedPracticeEntity> findCompletedPractices(UUID studentId) {
-        log.info("Loading completed directed practices: studentId={}", studentId);
+        log.info("Loading completed directed practices.");
         return directedPracticeRepository.findAllByStudent_IdAndStatus(studentId, DirectedPracticeStatus.FINALIZADA);
     }
 
     private StudentDashboardResponseDTO buildDirectedPracticeDashboard(List<DirectedPracticeEntity> practices) {
-        log.info("Grouping completed directed practices by area: completedActivities={}", practices.size());
+        log.info("Grouping completed directed practices by area.");
         var practicesByArea = practices.stream()
                 .collect(Collectors.groupingBy(DirectedPracticeEntity::getArea,
                         () -> new EnumMap<>(ExamAreaEnum.class), Collectors.toList()));
@@ -83,7 +81,7 @@ public class StudentDashboardService implements IStudentDashboardService {
 
     private DashboardAreaPerformanceDTO buildPracticeAreaPerformance(ExamAreaEnum area,
                                                                     List<DirectedPracticeEntity> practices) {
-        log.info("Counting directed practice answers: examArea={}, completedActivities={}", area, practices.size());
+        log.info("Counting directed practice answers.");
         var correctedQuestions = practices.stream()
                 .flatMap(practice -> findCorrectedPracticeQuestions(practice).stream())
                 .toList();
@@ -123,12 +121,12 @@ public class StudentDashboardService implements IStudentDashboardService {
     }
 
     private List<SimulationEntity> findCompletedSimulations(UUID studentId) {
-        log.info("Loading completed simulations: studentId={}", studentId);
+        log.info("Loading completed simulations.");
         return simulationRepository.findAllByStudent_IdAndStatus(studentId, SimulationStatusEnum.FINALIZADO);
     }
 
     private StudentDashboardResponseDTO buildSimulationDashboard(List<SimulationEntity> simulations) {
-        log.info("Building simulation dashboard response: completedActivities={}", simulations.size());
+        log.info("Building simulation dashboard response.");
         var correctedQuestions = simulations.stream()
                 .flatMap(simulation -> findCorrectedSimulationQuestions(simulation).stream())
                 .toList();
@@ -166,7 +164,7 @@ public class StudentDashboardService implements IStudentDashboardService {
     }
 
     private List<DashboardAreaPerformanceDTO> buildAreaPerformances(List<SimulationQuestionEntity> questions) {
-        log.info("Grouping corrected simulation questions by area: totalQuestions={}", questions.size());
+        log.info("Grouping corrected simulation questions by area.");
         var questionsByArea = questions.stream()
                 .filter(question -> question.getExamAreaSnapshot() != null)
                 .collect(Collectors.groupingBy(SimulationQuestionEntity::getExamAreaSnapshot,
@@ -179,32 +177,32 @@ public class StudentDashboardService implements IStudentDashboardService {
 
     private DashboardAreaPerformanceDTO buildAreaPerformance(ExamAreaEnum area, List<SimulationQuestionEntity> questions) {
         var totalQuestions = questions.size();
-        log.info("Building simulation area performance: examArea={}, totalQuestions={}", area, totalQuestions);
+        log.info("Building simulation area performance.");
         var correctAnswers = countCorrectAnswers(questions);
         return buildAreaPerformance(area, totalQuestions, correctAnswers);
     }
 
     private DashboardAreaPerformanceDTO buildAreaPerformance(ExamAreaEnum area, int totalQuestions, int correctAnswers) {
-        log.info("Building dashboard area performance: examArea={}, totalQuestions={}", area, totalQuestions);
+        log.info("Building dashboard area performance.");
         var percentage = calculateAccuracyPercentage(correctAnswers, totalQuestions);
         return new DashboardAreaPerformanceDTO(area, totalQuestions, correctAnswers,
                 totalQuestions - correctAnswers, percentage, classify(percentage));
     }
 
     private int countCorrectAnswers(List<SimulationQuestionEntity> questions) {
-        log.info("Counting correct simulation answers: totalQuestions={}", questions.size());
+        log.info("Counting correct simulation answers.");
         return Math.toIntExact(questions.stream()
                 .filter(question -> Boolean.TRUE.equals(question.getAnswer().getIsCorrect()))
                 .count());
     }
 
     private double calculateAccuracyPercentage(int correctAnswers, int totalQuestions) {
-        log.info("Calculating accuracy: correctAnswers={}, totalQuestions={}", correctAnswers, totalQuestions);
+        log.info("Calculating accuracy.");
         return totalQuestions == 0 ? 0.0 : correctAnswers * 100.0 / totalQuestions;
     }
 
     private String classify(double percentage) {
-        log.info("Classifying area performance: accuracyPercentage={}", percentage);
+        log.info("Classifying area performance.");
         if (percentage < 50) {
             return "Dificuldade alta";
         }

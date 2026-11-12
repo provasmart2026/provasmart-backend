@@ -32,6 +32,21 @@ public record UserRequestDTO(
         @NotNull
         @AssertTrue(message = "é necessário aceitar a Política de Privacidade")
         @Schema(description = "Aceite da Política de Privacidade", example = "true")
-        Boolean acceptPrivacyPolicy
+        Boolean acceptPrivacyPolicy,
+
+        @NotNull
+        @AssertTrue(message = "É necessário confirmar a declaração de idade")
+        @Schema(description = "Declaração de que possui 13 anos ou mais e, se menor de 18, utiliza a plataforma com ciência do responsável legal", example = "true")
+        Boolean ageDeclarationAccepted,
+
+        @NotBlank
+        @Size(max = 20)
+        @Schema(description = "Versão dos Termos de Uso apresentada no cadastro", example = "1.1")
+        String termsVersion,
+
+        @NotBlank
+        @Size(max = 20)
+        @Schema(description = "Versão da Política de Privacidade apresentada no cadastro", example = "1.1")
+        String privacyVersion
 ) {
 }
