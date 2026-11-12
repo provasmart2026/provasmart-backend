@@ -2,6 +2,10 @@ package br.com.provasmart.api.controller;
 
 import br.com.provasmart.api.dto.practice.DirectedPracticeAnalysisDTO;
 import br.com.provasmart.api.dto.practice.DirectedPracticeDTO;
+import br.com.provasmart.api.dto.response.practice.DirectedPracticeSummaryResponseDTO;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import br.com.provasmart.api.service.IDirectedPracticeService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -18,6 +22,11 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class DirectedPracticeController {
     private final IDirectedPracticeService service;
+
+    @GetMapping("/history")
+    public ResponseEntity<Page<DirectedPracticeSummaryResponseDTO>> findHistory(@PageableDefault(size = 10) Pageable pageable) {
+        return ResponseEntity.ok(service.findHistory(pageable));
+    }
 
     public record AnswerRequest(@NotNull UUID alternativeId) {}
 

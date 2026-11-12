@@ -11,6 +11,7 @@ import br.com.provasmart.api.domain.enums.SimulationStatusEnum;
 import br.com.provasmart.api.dto.request.simulation.SimulationAnswerRequestDTO;
 import br.com.provasmart.api.dto.response.simulation.SimulationQuestionCorrectionResponseDTO;
 import br.com.provasmart.api.dto.response.simulation.SimulationResponseDTO;
+import br.com.provasmart.api.dto.response.simulation.SimulationSummaryResponseDTO;
 import br.com.provasmart.api.exception.BadRequestException;
 import br.com.provasmart.api.exception.ConflictException;
 import br.com.provasmart.api.exception.NotFoundException;
@@ -29,6 +30,8 @@ import br.com.provasmart.api.service.ISimulationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -37,6 +40,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -67,6 +71,17 @@ public class SimulationService implements ISimulationService {
     private final IUserRepository userRepository;
 
     private final ICurrentActorService currentActorService;
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<SimulationSummaryResponseDTO> findHistory(Pageable pageable) {
+        log.info("Fetching simulation history.");
+        var studentId = getCurrentStudentId();
+        var statuses = List.of(SimulationStatusEnum.FINALIZADO, SimulationStatusEnum.CANCELADO);
+        var simulations = simulationRepository.findByStudent_IdAndStatusInOrderByStartedAtDescIdDesc(
+                studentId, statuses, pageable);
+        return simulations.map(this::toHistorySummary);
+    }
 
     @Override
     @Transactional
@@ -203,6 +218,36 @@ public class SimulationService implements ISimulationService {
         var simulation = getLatestFinishedSimulation(studentId);
 
         return simulationMapper.toDTO(simulation);
+    }
+
+    private SimulationSummaryResponseDTO toHistorySummary(SimulationEntity simulation) {
+        var totalQuestions = simulation.getQuestions().size();
+        var answers = findAnswers(simulation);
+        var answeredQuestions = answers.size();
+        var finished = simulation.getStatus() == SimulationStatusEnum.FINALIZADO;
+        var correctAnswers = finished ? countCorrectAnswers(answers) : null;
+        var incorrectAnswers = finished ? answeredQuestions - correctAnswers : null;
+        var accuracyPercentage = finished ? calculateAccuracyPercentage(correctAnswers, answeredQuestions) : null;
+
+        return simulationMapper.toSummaryDTO(simulation, totalQuestions, answeredQuestions,
+                correctAnswers, incorrectAnswers, accuracyPercentage);
+    }
+
+    private List<SimulationAnswerEntity> findAnswers(SimulationEntity simulation) {
+        return simulation.getQuestions().stream()
+                .map(SimulationQuestionEntity::getAnswer)
+                .filter(Objects::nonNull)
+                .toList();
+    }
+
+    private int countCorrectAnswers(List<SimulationAnswerEntity> answers) {
+        return Math.toIntExact(answers.stream()
+                .filter(answer -> Boolean.TRUE.equals(answer.getIsCorrect()))
+                .count());
+    }
+
+    private double calculateAccuracyPercentage(int correctAnswers, int answeredQuestions) {
+        return answeredQuestions == 0 ? 0.0 : correctAnswers * 100.0 / answeredQuestions;
     }
 
     private SimulationEntity getLatestFinishedSimulation(UUID studentId) {
