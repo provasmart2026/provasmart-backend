@@ -2,6 +2,7 @@ package br.com.provasmart.api.service.impl;
 
 import br.com.provasmart.api.domain.entity.users.UserEntity;
 import br.com.provasmart.api.domain.enums.RoleEnum;
+import br.com.provasmart.api.domain.enums.LegalDocumentTypeEnum;
 import br.com.provasmart.api.dto.request.user.UserRequestDTO;
 import br.com.provasmart.api.dto.response.user.UserResponseDTO;
 import br.com.provasmart.api.exception.BadRequestException;
@@ -12,6 +13,7 @@ import br.com.provasmart.api.repository.users.IUserRepository;
 import br.com.provasmart.api.repository.studyplans.IStudyPlanRepository;
 import br.com.provasmart.api.service.ICurrentActorService;
 import br.com.provasmart.api.service.IUserService;
+import br.com.provasmart.api.service.ILegalDocumentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -36,6 +38,7 @@ public class UserService implements IUserService {
 
     private final ICurrentActorService currentActorService;
     private final IStudyPlanRepository studyPlanRepository;
+    private final ILegalDocumentService legalDocumentService;
 
     @Override
     public UserResponseDTO create(UserRequestDTO userRequestDTO) {
@@ -44,6 +47,8 @@ public class UserService implements IUserService {
         var normalizedEmail = normalizeEmail(userRequestDTO);
 
         validateEmailExists(normalizedEmail);
+
+        validateLegalDocumentVersions(userRequestDTO);
 
         var userEntity = mapToEntity(userRequestDTO);
 
@@ -127,6 +132,16 @@ public class UserService implements IUserService {
         studyPlanRepository.flush();
 
         userRepository.delete(userEntity);
+    }
+
+    private void validateLegalDocumentVersions(UserRequestDTO request) {
+        var terms = legalDocumentService.findCurrent(LegalDocumentTypeEnum.TERMOS_DE_USO);
+        var privacy = legalDocumentService.findCurrent(LegalDocumentTypeEnum.POLITICA_DE_PRIVACIDADE);
+
+        if (!terms.version().equals(request.termsVersion())
+                || !privacy.version().equals(request.privacyVersion())) {
+            throw new ConflictException("Os documentos legais foram atualizados. Consulte os termos e a política vigentes antes de concluir o cadastro.");
+        }
     }
 
     private void validateUserIsNotAdmin(UserEntity userEntity) {

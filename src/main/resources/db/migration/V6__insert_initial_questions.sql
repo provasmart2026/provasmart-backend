@@ -1,13 +1,13 @@
--- V6__insert_initial_questions.sql
--- Seed inicial para testes do Banco de Questões e do Simulado Geral.
--- 40 questões ativas: 10 por área de conhecimento.
--- Cada questão possui 5 alternativas e exatamente 1 alternativa correta.
 
--- ============================================================
--- LINGUAGENS
--- ============================================================
 
--- Questão 01 - Língua Portuguesa / Interpretação de Texto
+
+
+
+
+
+
+
+
 WITH inserted_question AS (
 INSERT INTO questions (
     statement,
@@ -53,7 +53,7 @@ FROM inserted_question
         ('E', 'Impedir a interpretação do leitor.', FALSE)
 ) AS alternative(letter, text, correct);
 
--- Questão 02 - Língua Portuguesa / Gêneros Textuais
+
 WITH inserted_question AS (
 INSERT INTO questions (
     statement,
@@ -99,7 +99,7 @@ FROM inserted_question
         ('E', 'Utilizar somente linguagem informal.', FALSE)
 ) AS alternative(letter, text, correct);
 
--- Questão 03 - Língua Portuguesa / Figuras de Linguagem
+
 WITH inserted_question AS (
 INSERT INTO questions (
     statement,
@@ -145,7 +145,7 @@ FROM inserted_question
         ('E', 'Antítese.', FALSE)
 ) AS alternative(letter, text, correct);
 
--- Questão 04 - Língua Portuguesa / Coesão e Coerência
+
 WITH inserted_question AS (
 INSERT INTO questions (
     statement,
@@ -191,7 +191,7 @@ FROM inserted_question
         ('E', 'Tempo.', FALSE)
 ) AS alternative(letter, text, correct);
 
--- Questão 05 - Língua Portuguesa / Semântica
+
 WITH inserted_question AS (
 INSERT INTO questions (
     statement,
@@ -237,7 +237,7 @@ FROM inserted_question
         ('E', 'Regência.', FALSE)
 ) AS alternative(letter, text, correct);
 
--- Questão 06 - Literatura / Modernismo
+
 WITH inserted_question AS (
 INSERT INTO questions (
     statement,
@@ -283,7 +283,7 @@ FROM inserted_question
         ('E', 'Uso obrigatório de versos alexandrinos.', FALSE)
 ) AS alternative(letter, text, correct);
 
--- Questão 07 - Literatura / Literatura Brasileira
+
 WITH inserted_question AS (
 INSERT INTO questions (
     statement,
@@ -329,7 +329,7 @@ FROM inserted_question
         ('E', 'Impede interpretações distintas.', FALSE)
 ) AS alternative(letter, text, correct);
 
--- Questão 08 - Língua Inglesa / Vocabulário em Contexto
+
 WITH inserted_question AS (
 INSERT INTO questions (
     statement,
@@ -375,7 +375,7 @@ FROM inserted_question
         ('E', 'Barato.', FALSE)
 ) AS alternative(letter, text, correct);
 
--- Questão 09 - Artes / História da Arte
+
 WITH inserted_question AS (
 INSERT INTO questions (
     statement,
@@ -421,7 +421,7 @@ FROM inserted_question
         ('E', 'Reproduzir sempre o mesmo padrão estético.', FALSE)
 ) AS alternative(letter, text, correct);
 
--- Questão 10 - Tecnologias da Informação e Comunicação / Cultura Digital
+
 WITH inserted_question AS (
 INSERT INTO questions (
     statement,
@@ -467,11 +467,11 @@ FROM inserted_question
         ('E', 'Compartilhar apenas pelo título.', FALSE)
 ) AS alternative(letter, text, correct);
 
--- ============================================================
--- CIÊNCIAS HUMANAS
--- ============================================================
 
--- Questão 01 - História / Brasil Colônia
+
+
+
+
 WITH inserted_question AS (
 INSERT INTO questions (
     statement,
@@ -517,7 +517,7 @@ FROM inserted_question
         ('E', 'No extremo oeste paulista.', FALSE)
 ) AS alternative(letter, text, correct);
 
--- Questão 02 - História / Era Vargas
+
 WITH inserted_question AS (
 INSERT INTO questions (
     statement,
@@ -563,7 +563,7 @@ FROM inserted_question
         ('E', 'Eurico Gaspar Dutra.', FALSE)
 ) AS alternative(letter, text, correct);
 
--- Questão 03 - História / Ditadura Militar no Brasil
+
 WITH inserted_question AS (
 INSERT INTO questions (
     statement,
@@ -609,7 +609,7 @@ FROM inserted_question
         ('E', 'Retorno das eleições presidenciais diretas.', FALSE)
 ) AS alternative(letter, text, correct);
 
--- Questão 04 - História / Revolução Francesa
+
 WITH inserted_question AS (
 INSERT INTO questions (
     statement,
@@ -655,7 +655,7 @@ FROM inserted_question
         ('E', 'Expansão marítima portuguesa.', FALSE)
 ) AS alternative(letter, text, correct);
 
--- Questão 05 - História / Segunda Guerra Mundial
+
 WITH inserted_question AS (
 INSERT INTO questions (
     statement,
@@ -701,7 +701,7 @@ FROM inserted_question
         ('E', 'A independência dos Estados Unidos.', FALSE)
 ) AS alternative(letter, text, correct);
 
--- Questão 06 - Geografia / Geopolítica
+
 WITH inserted_question AS (
 INSERT INTO questions (
     statement,
@@ -747,7 +747,7 @@ FROM inserted_question
         ('E', 'Exclusivamente das espécies animais.', FALSE)
 ) AS alternative(letter, text, correct);
 
--- Questão 07 - Geografia / Globalização
+
 WITH inserted_question AS (
 INSERT INTO questions (
     statement,
@@ -793,7 +793,7 @@ FROM inserted_question
         ('E', 'Desaparecimento das empresas multinacionais.', FALSE)
 ) AS alternative(letter, text, correct);
 
--- Questão 08 - Geografia / Questões Ambientais
+
 WITH inserted_question AS (
 INSERT INTO questions (
     statement,
@@ -839,7 +839,7 @@ FROM inserted_question
         ('E', 'Aumento permanente da fertilidade dos solos.', FALSE)
 ) AS alternative(letter, text, correct);
 
--- Questão 09 - Filosofia / Ética
+
 WITH inserted_question AS (
 INSERT INTO questions (
     statement,
@@ -885,7 +885,7 @@ FROM inserted_question
         ('E', 'Exclusivamente técnicas de produção industrial.', FALSE)
 ) AS alternative(letter, text, correct);
 
--- Questão 10 - Sociologia / Desigualdade Social
+
 WITH inserted_question AS (
 INSERT INTO questions (
     statement,
@@ -931,11 +931,11 @@ FROM inserted_question
         ('E', 'Situação restrita apenas ao ambiente escolar.', FALSE)
 ) AS alternative(letter, text, correct);
 
--- ============================================================
--- CIÊNCIAS DA NATUREZA
--- ============================================================
 
--- Questão 01 - Biologia / Ecologia
+
+
+
+
 WITH inserted_question AS (
 INSERT INTO questions (
     statement,
@@ -981,7 +981,7 @@ FROM inserted_question
         ('E', 'São sempre fungos.', FALSE)
 ) AS alternative(letter, text, correct);
 
--- Questão 02 - Biologia / Genética
+
 WITH inserted_question AS (
 INSERT INTO questions (
     statement,
@@ -1027,7 +1027,7 @@ FROM inserted_question
         ('E', 'Regular exclusivamente a temperatura corporal.', FALSE)
 ) AS alternative(letter, text, correct);
 
--- Questão 03 - Biologia / Evolução
+
 WITH inserted_question AS (
 INSERT INTO questions (
     statement,
@@ -1073,7 +1073,7 @@ FROM inserted_question
         ('E', 'A ausência de mudanças populacionais.', FALSE)
 ) AS alternative(letter, text, correct);
 
--- Questão 04 - Biologia / Fisiologia Humana
+
 WITH inserted_question AS (
 INSERT INTO questions (
     statement,
@@ -1119,7 +1119,7 @@ FROM inserted_question
         ('E', 'Formar neurônios.', FALSE)
 ) AS alternative(letter, text, correct);
 
--- Questão 05 - Física / Cinemática
+
 WITH inserted_question AS (
 INSERT INTO questions (
     statement,
@@ -1165,7 +1165,7 @@ FROM inserted_question
         ('E', '240 km/h.', FALSE)
 ) AS alternative(letter, text, correct);
 
--- Questão 06 - Física / Dinâmica
+
 WITH inserted_question AS (
 INSERT INTO questions (
     statement,
@@ -1211,7 +1211,7 @@ FROM inserted_question
         ('E', 'Ao volume multiplicado pela densidade.', FALSE)
 ) AS alternative(letter, text, correct);
 
--- Questão 07 - Física / Eletricidade
+
 WITH inserted_question AS (
 INSERT INTO questions (
     statement,
@@ -1257,7 +1257,7 @@ FROM inserted_question
         ('E', 'Joule.', FALSE)
 ) AS alternative(letter, text, correct);
 
--- Questão 08 - Química / Estrutura Atômica
+
 WITH inserted_question AS (
 INSERT INTO questions (
     statement,
@@ -1303,7 +1303,7 @@ FROM inserted_question
         ('E', 'Íon neutro.', FALSE)
 ) AS alternative(letter, text, correct);
 
--- Questão 09 - Química / Estequiometria
+
 WITH inserted_question AS (
 INSERT INTO questions (
     statement,
@@ -1349,7 +1349,7 @@ FROM inserted_question
         ('E', 'Analisar movimentos sociais.', FALSE)
 ) AS alternative(letter, text, correct);
 
--- Questão 10 - Química / Química Orgânica
+
 WITH inserted_question AS (
 INSERT INTO questions (
     statement,
@@ -1395,11 +1395,11 @@ FROM inserted_question
         ('E', 'Oxigênio e enxofre.', FALSE)
 ) AS alternative(letter, text, correct);
 
--- ============================================================
--- MATEMÁTICA
--- ============================================================
 
--- Questão 01 - Matemática / Matemática Básica
+
+
+
+
 WITH inserted_question AS (
 INSERT INTO questions (
     statement,
@@ -1445,7 +1445,7 @@ FROM inserted_question
         ('E', '57', FALSE)
 ) AS alternative(letter, text, correct);
 
--- Questão 02 - Matemática / Razão e Proporção
+
 WITH inserted_question AS (
 INSERT INTO questions (
     statement,
@@ -1491,7 +1491,7 @@ FROM inserted_question
         ('E', 'R$ 36,00', FALSE)
 ) AS alternative(letter, text, correct);
 
--- Questão 03 - Matemática / Porcentagem
+
 WITH inserted_question AS (
 INSERT INTO questions (
     statement,
@@ -1537,7 +1537,7 @@ FROM inserted_question
         ('E', 'R$ 220,00', FALSE)
 ) AS alternative(letter, text, correct);
 
--- Questão 04 - Matemática / Equações
+
 WITH inserted_question AS (
 INSERT INTO questions (
     statement,
@@ -1583,7 +1583,7 @@ FROM inserted_question
         ('E', '13', FALSE)
 ) AS alternative(letter, text, correct);
 
--- Questão 05 - Matemática / Funções
+
 WITH inserted_question AS (
 INSERT INTO questions (
     statement,
@@ -1629,7 +1629,7 @@ FROM inserted_question
         ('E', '14', FALSE)
 ) AS alternative(letter, text, correct);
 
--- Questão 06 - Matemática / Geometria Plana
+
 WITH inserted_question AS (
 INSERT INTO questions (
     statement,
@@ -1675,7 +1675,7 @@ FROM inserted_question
         ('E', '160 cm²', FALSE)
 ) AS alternative(letter, text, correct);
 
--- Questão 07 - Matemática / Probabilidade
+
 WITH inserted_question AS (
 INSERT INTO questions (
     statement,
@@ -1721,7 +1721,7 @@ FROM inserted_question
         ('E', '5/6', FALSE)
 ) AS alternative(letter, text, correct);
 
--- Questão 08 - Matemática / Estatística
+
 WITH inserted_question AS (
 INSERT INTO questions (
     statement,
@@ -1767,7 +1767,7 @@ FROM inserted_question
         ('E', '10', FALSE)
 ) AS alternative(letter, text, correct);
 
--- Questão 09 - Matemática / Análise Combinatória
+
 WITH inserted_question AS (
 INSERT INTO questions (
     statement,
@@ -1813,7 +1813,7 @@ FROM inserted_question
         ('E', '12', FALSE)
 ) AS alternative(letter, text, correct);
 
--- Questão 10 - Matemática / Matemática Financeira
+
 WITH inserted_question AS (
 INSERT INTO questions (
     statement,
