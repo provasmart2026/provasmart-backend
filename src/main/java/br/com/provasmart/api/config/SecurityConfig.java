@@ -44,6 +44,8 @@ public class SecurityConfig {
                         .authenticationEntryPoint(authenticationEntryPoint)
                         .accessDeniedHandler(accessDeniedHandler))
                 .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers(HttpMethod.POST, "/legal-documents/acceptance").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/legal-documents/acceptance-status").authenticated()
                         .requestMatchers(HttpMethod.GET, "/legal-documents/{type}/current").permitAll()
                         .requestMatchers(HttpMethod.POST, "/users").permitAll()
                         .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
