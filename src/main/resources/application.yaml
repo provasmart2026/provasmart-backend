@@ -1,6 +1,6 @@
 audit:
   retention-days: 90
-  cleanup-cron: '0 0 3 * * *'
+  cleanup-cron: ${AUDIT_CLEANUP_CRON}
 
 spring:
   application:

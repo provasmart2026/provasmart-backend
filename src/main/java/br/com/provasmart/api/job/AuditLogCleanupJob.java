@@ -25,7 +25,7 @@ public class AuditLogCleanupJob {
         this.retentionDays = retentionDays;
     }
 
-    @Scheduled(cron = "${audit.cleanup-cron:0 0 3 * * *}", zone = "America/Sao_Paulo")
+    @Scheduled(cron = "${audit.cleanup-cron}", zone = "America/Sao_Paulo")
     @Transactional
     public void cleanup() {
         var cutoff = LocalDateTime.now().minusDays(retentionDays);
