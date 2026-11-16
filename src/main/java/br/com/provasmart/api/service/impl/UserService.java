@@ -4,6 +4,7 @@ import br.com.provasmart.api.domain.entity.users.UserEntity;
 import br.com.provasmart.api.domain.enums.RoleEnum;
 import br.com.provasmart.api.domain.enums.LegalDocumentTypeEnum;
 import br.com.provasmart.api.dto.request.user.UserRequestDTO;
+import br.com.provasmart.api.dto.request.user.UpdateUserNameRequestDTO;
 import br.com.provasmart.api.dto.response.user.UserResponseDTO;
 import br.com.provasmart.api.exception.BadRequestException;
 import br.com.provasmart.api.exception.ConflictException;
@@ -46,6 +47,11 @@ public class UserService implements IUserService {
 
         var normalizedEmail = normalizeEmail(userRequestDTO);
 
+        if (userRequestDTO.confirmEmail() == null
+                || !normalizedEmail.equals(userRequestDTO.confirmEmail().trim().toLowerCase(java.util.Locale.ROOT))) {
+            throw new BadRequestException("Os e-mails não coincidem.");
+        }
+
         validateEmailExists(normalizedEmail);
 
         validateLegalDocumentVersions(userRequestDTO);
@@ -87,6 +93,15 @@ public class UserService implements IUserService {
         var userEntity = findUserById(userId);
 
         return mapToDTO(userEntity);
+    }
+
+    @Override
+    @Transactional
+    public UserResponseDTO updateCurrentUserName(UpdateUserNameRequestDTO request) {
+        var user = findUserById(currentActorService.getCurrentUserId());
+        user.setName(request.name().strip());
+        user.setUpdatedAt(LocalDateTime.now());
+        return mapToDTO(save(user));
     }
 
     @Override
@@ -166,7 +181,7 @@ public class UserService implements IUserService {
 
     private static String normalizeEmail(UserRequestDTO userRequestDTO) {
         log.info("Normalizing email for user creation.");
-        return userRequestDTO.email().trim().toLowerCase();
+        return userRequestDTO.email().trim().toLowerCase(java.util.Locale.ROOT);
     }
 
     private UserResponseDTO mapToDTO(UserEntity savedUser) {

@@ -1,6 +1,7 @@
 package br.com.provasmart.api.service;
 
 import br.com.provasmart.api.dto.request.user.UserRequestDTO;
+import br.com.provasmart.api.dto.request.user.UpdateUserNameRequestDTO;
 import br.com.provasmart.api.dto.response.user.UserResponseDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -16,6 +17,8 @@ public interface IUserService {
     Page<UserResponseDTO> findAll(Pageable pageable);
 
     UserResponseDTO findCurrentUser();
+
+    UserResponseDTO updateCurrentUserName(UpdateUserNameRequestDTO request);
 
     void activate(UUID id);
 

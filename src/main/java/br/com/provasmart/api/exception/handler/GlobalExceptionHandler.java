@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 public class GlobalExceptionHandler {
 
 
+
     @ExceptionHandler(BadRequestException.class)
     public ResponseEntity<ErrorResponseDTO> handleBadRequestException(BadRequestException exception,
                                                                     HttpServletRequest request) {

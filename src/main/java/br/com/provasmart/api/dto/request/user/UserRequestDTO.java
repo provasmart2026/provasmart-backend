@@ -17,6 +17,12 @@ public record UserRequestDTO(
         @Schema(description = "Email do usuário", example = "joao.silva@example.com")
         String email,
 
+        @NotBlank(message = "Confirme o e-mail")
+        @Email(message = "A confirmação do e-mail deve ser válida")
+        @Size(max = 255)
+        @Schema(description = "Confirmação do email do usuário", example = "joao.silva@example.com")
+        String confirmEmail,
+
         @NotBlank
         @Size(min = 8, message = "a senha deve ter pelo menos 8 caracteres")
         @Pattern(regexp = "^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[^A-Za-z0-9]).+$",
