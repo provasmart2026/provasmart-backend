@@ -2,6 +2,7 @@ package br.com.provasmart.api.controller;
 
 import br.com.provasmart.api.audit.AuditContext;
 import br.com.provasmart.api.dto.request.user.UserRequestDTO;
+import br.com.provasmart.api.dto.request.user.UpdateUserNameRequestDTO;
 import br.com.provasmart.api.dto.response.user.UserResponseDTO;
 import br.com.provasmart.api.service.IUserService;
 import jakarta.validation.Valid;
@@ -35,6 +36,12 @@ public class UserController {
     public ResponseEntity<UserResponseDTO> findCurrentUser() {
         var user = userService.findCurrentUser();
         return ResponseEntity.ok(user);
+    }
+
+    @PatchMapping("/me/name")
+    public ResponseEntity<UserResponseDTO> updateCurrentUserName(
+            @RequestBody @Valid UpdateUserNameRequestDTO request) {
+        return ResponseEntity.ok(userService.updateCurrentUserName(request));
     }
 
     @PatchMapping("/me/request-deletion")
