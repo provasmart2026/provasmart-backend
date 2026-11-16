@@ -7,6 +7,7 @@ CREATE TABLE authentication_codes
     expires_at TIMESTAMP   NOT NULL,
     used       BOOLEAN     NOT NULL,
     created_at TIMESTAMP   NOT NULL,
+    invalid_attempts INTEGER NOT NULL DEFAULT 0 CHECK (invalid_attempts >= 0),
 
     CONSTRAINT fk_authentication_codes_user
         FOREIGN KEY (user_id)

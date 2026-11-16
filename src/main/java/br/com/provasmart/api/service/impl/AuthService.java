@@ -21,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
@@ -29,6 +30,8 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 @Slf4j
 public class AuthService implements IAuthService {
+
+    private static final int MAX_AUTHENTICATION_CODE_INVALID_ATTEMPTS = 5;
 
     private final IUserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -40,7 +43,7 @@ public class AuthService implements IAuthService {
 
     @Override
     public LoginResponseDTO login(LoginRequestDTO loginRequestDTO) {
-        log.info("Starting login process for email: {}", loginRequestDTO.email());
+        log.info("Starting login process.");
 
         var normalizedEmail = normalizeEmail(loginRequestDTO.email());
         var user = findUserByEmail(normalizedEmail);
@@ -67,6 +70,7 @@ public class AuthService implements IAuthService {
     }
 
     @Override
+    @Transactional(noRollbackFor = BadRequestException.class)
     public TokenResponseDTO verifyTwoFactor(VerifyTwoFactorRequestDTO verifyTwoFactorRequestDTO) {
         log.info("Starting two-factor authentication code verification.");
 
@@ -78,6 +82,8 @@ public class AuthService implements IAuthService {
         var authenticationCode = findAuthenticationCode(user);
 
         validateCodeExpiration(authenticationCode);
+
+        validateAttemptLimit(authenticationCode);
 
         validateAuthenticationCode(verifyTwoFactorRequestDTO.code(), authenticationCode);
 
@@ -113,6 +119,7 @@ public class AuthService implements IAuthService {
     }
 
     @Override
+    @Transactional(noRollbackFor = BadRequestException.class)
     public LoginResponseDTO resetPassword(ResetPasswordRequestDTO resetPasswordRequestDTO) {
         log.info("Starting password reset process.");
 
@@ -122,6 +129,8 @@ public class AuthService implements IAuthService {
         var authenticationCode = findPasswordResetCode(user);
 
         validateCodeExpiration(authenticationCode);
+
+        validateAttemptLimit(authenticationCode);
 
         validateAuthenticationCode(resetPasswordRequestDTO.code(), authenticationCode);
 
@@ -134,6 +143,14 @@ public class AuthService implements IAuthService {
         log.info("Password reset successfully");
         return new LoginResponseDTO("Senha redefinida com sucesso.");
     }
+
+    private void validateAttemptLimit(AuthenticationCodeEntity authenticationCode) {
+        if (authenticationCode.getInvalidAttempts() >= MAX_AUTHENTICATION_CODE_INVALID_ATTEMPTS) {
+            markUsedTrue(authenticationCode);
+            throw new BadRequestException(attemptLimitMessage(authenticationCode));
+        }
+    }
+
 
     private void setNewPassword(UserEntity user, String encodedNewPassword) {
         log.info("Setting new password");
@@ -178,7 +195,7 @@ public class AuthService implements IAuthService {
     }
 
     private UserEntity findUserByEmail(String email) {
-        log.info("Finding user by email: {}", email);
+        log.info("Finding user for authentication.");
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> {
                     log.error("Login attempt with invalid credentials.");
@@ -187,17 +204,17 @@ public class AuthService implements IAuthService {
     }
 
     private void validateUserActive(UserEntity user) {
-        log.info("Validating user active for email: {}", user.getEmail());
+        log.info("Validating user active status.");
         if (!user.isActive()) {
-            log.error("User with email {} is not active.", user.getEmail());
+            log.error("Authentication rejected: user is not active.");
             throw new UnauthorizedException("Usuário não está ativo.");
         }
     }
 
     private void validatePassword(String password, UserEntity user) {
-        log.info("Validating password for user with email: {}", user.getEmail());
+        log.info("Validating user password.");
         if (!passwordEncoder.matches(password, user.getPassword())) {
-            log.error("Invalid password for user with email: {}", user.getEmail());
+            log.error("Authentication rejected: invalid password.");
             throw new UnauthorizedException("Email ou senha inválidos.");
         }
     }
@@ -210,14 +227,14 @@ public class AuthService implements IAuthService {
     }
 
     private void invalidatePreviousCodes(UserEntity user) {
-        log.info("Invalidating previous code for user: {}", user.getEmail());
+        log.info("Invalidating previous two-factor authentication code.");
         var authenticationCodes = authenticationCodeRepository.findAllByUserAndPurposeAndUsedFalse(user, AuthenticationCodePurposeEnum.LOGIN_2FA);
         authenticationCodes.forEach(code -> code.setUsed(true));
         authenticationCodeRepository.saveAll(authenticationCodes);
     }
 
     private void invalidatePreviousPasswordResetCodes(UserEntity user) {
-        log.info("Invalidating previous password reset code for user: {}", user.getEmail());
+        log.info("Invalidating previous password reset code.");
 
         var authenticationCodes = authenticationCodeRepository.findAllByUserAndPurposeAndUsedFalse(user, AuthenticationCodePurposeEnum.PASSWORD_RESET);
         authenticationCodes.forEach(code -> code.setUsed(true));
@@ -227,7 +244,7 @@ public class AuthService implements IAuthService {
     private AuthenticationCodeEntity findAuthenticationCode(UserEntity user) {
         log.info("Finding authentication code");
 
-        return authenticationCodeRepository.findFirstByUserAndPurposeAndUsedFalseOrderByCreatedAtDesc(user, AuthenticationCodePurposeEnum.LOGIN_2FA)
+        return authenticationCodeRepository.findTopByUserAndPurposeAndUsedFalseOrderByCreatedAtDesc(user, AuthenticationCodePurposeEnum.LOGIN_2FA)
                 .orElseThrow(() -> {
                     log.error("Two-factor authentication code not found.");
                     return new BadRequestException("Código de autenticação não encontrado.");
@@ -244,12 +261,26 @@ public class AuthService implements IAuthService {
     }
 
     private void validateAuthenticationCode(String code, AuthenticationCodeEntity authenticationCode) {
-        log.info("Validating two-factor authentication code.");
+        log.info("Validating authentication code.");
 
         if (!passwordEncoder.matches(code, authenticationCode.getCode())) {
-            log.error("Invalid two-factor authentication code.");
+            authenticationCode.setInvalidAttempts(authenticationCode.getInvalidAttempts() + 1);
+            if (authenticationCode.getInvalidAttempts() >= MAX_AUTHENTICATION_CODE_INVALID_ATTEMPTS) {
+                authenticationCode.setUsed(true);
+            }
+            save(authenticationCode);
+            if (Boolean.TRUE.equals(authenticationCode.getUsed())) {
+                throw new BadRequestException(attemptLimitMessage(authenticationCode));
+            }
+            log.error("Invalid authentication code.");
             throw new BadRequestException("Código de autenticação inválido.");
         }
+    }
+
+    private String attemptLimitMessage(AuthenticationCodeEntity authenticationCode) {
+        return authenticationCode.getPurpose() == AuthenticationCodePurposeEnum.PASSWORD_RESET
+                ? "Limite de tentativas atingido. Solicite um novo código de recuperação de senha."
+                : "Limite de tentativas atingido. Faça login novamente para receber um novo código.";
     }
 
     private AuthenticationCodeEntity findPasswordResetCode(UserEntity user) {

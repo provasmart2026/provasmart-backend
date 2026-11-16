@@ -17,6 +17,12 @@ public record UserRequestDTO(
         @Schema(description = "Email do usuário", example = "joao.silva@example.com")
         String email,
 
+        @NotBlank(message = "Confirme o e-mail")
+        @Email(message = "A confirmação do e-mail deve ser válida")
+        @Size(max = 255)
+        @Schema(description = "Confirmação do email do usuário", example = "joao.silva@example.com")
+        String confirmEmail,
+
         @NotBlank
         @Size(min = 8, message = "a senha deve ter pelo menos 8 caracteres")
         @Pattern(regexp = "^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[^A-Za-z0-9]).+$",
@@ -32,6 +38,21 @@ public record UserRequestDTO(
         @NotNull
         @AssertTrue(message = "é necessário aceitar a Política de Privacidade")
         @Schema(description = "Aceite da Política de Privacidade", example = "true")
-        Boolean acceptPrivacyPolicy
+        Boolean acceptPrivacyPolicy,
+
+        @NotNull
+        @AssertTrue(message = "É necessário confirmar a declaração de idade")
+        @Schema(description = "Declaração de que possui 13 anos ou mais e, se menor de 18, utiliza a plataforma com ciência do responsável legal", example = "true")
+        Boolean ageDeclarationAccepted,
+
+        @NotBlank
+        @Size(max = 20)
+        @Schema(description = "Versão dos Termos de Uso apresentada no cadastro", example = "1.1")
+        String termsVersion,
+
+        @NotBlank
+        @Size(max = 20)
+        @Schema(description = "Versão da Política de Privacidade apresentada no cadastro", example = "1.1")
+        String privacyVersion
 ) {
 }

@@ -59,12 +59,12 @@ public class SubjectService implements ISubjectService {
     }
 
     private SubjectResponseDTO mapToResponseDTO(SubjectEntity subjectEntity) {
-        log.info("Mapping SubjectEntity to SubjectResponseDTO for subject: {}", subjectEntity);
+        log.info("Mapping subject to response for id: {}", subjectEntity.getId());
         return subjectMapper.toResponseDTO(subjectEntity);
     }
 
     private void save(SubjectEntity subjectEntity) {
-        log.info("Saving subject entity: {}", subjectEntity);
+        log.info("Saving subject.");
         subjectRepository.save(subjectEntity);
     }
 

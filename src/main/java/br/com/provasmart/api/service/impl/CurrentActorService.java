@@ -1,6 +1,7 @@
 package br.com.provasmart.api.service.impl;
 
 import br.com.provasmart.api.service.ICurrentActorService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.UUID;
 
+@Slf4j
 @Service
 public class CurrentActorService implements ICurrentActorService {
 
@@ -29,6 +31,7 @@ public class CurrentActorService implements ICurrentActorService {
     }
 
     private Authentication currentAuthentication() {
+        log.info("Retrieving current authentication from security context.");
         var authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication == null || !authentication.isAuthenticated()) {

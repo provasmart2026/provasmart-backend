@@ -15,5 +15,6 @@ public interface IAuthenticationCodeMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "used", constant = "false")
     @Mapping(target = "createdAt", expression = "java(java.time.LocalDateTime.now())")
+    @Mapping(target = "invalidAttempts", constant = "0")
     AuthenticationCodeEntity toEntity(UserEntity user, String code, AuthenticationCodePurposeEnum purpose, LocalDateTime expiresAt);
 }

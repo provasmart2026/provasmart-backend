@@ -97,17 +97,17 @@ public class QuestionService implements IQuestionService {
     }
 
     private QuestionEntity mapToEntity(QuestionRequestDTO requestDTO, SubjectEntity subject) {
-        log.info("Converting QuestionRequestDTO to QuestionEntity: {}", requestDTO);
+        log.info("Converting question request to entity.");
         return questionMapper.toEntity(requestDTO, subject);
     }
 
     private void save(QuestionEntity questionEntity) {
-        log.info("Saving QuestionEntity: {}", questionEntity);
+        log.info("Saving question.");
         questionRepository.save(questionEntity);
     }
 
     private QuestionResponseDTO mapToDTO(QuestionEntity questionEntity) {
-        log.info("Converting QuestionEntity to QuestionResponseDTO: {}", questionEntity);
+        log.info("Converting question to response for id: {}", questionEntity.getId());
         return questionMapper.toDTO(questionEntity);
     }
 
@@ -166,7 +166,7 @@ public class QuestionService implements IQuestionService {
     }
 
     private void mapToEntityUpdate(QuestionRequestDTO requestDTO, SubjectEntity subject, QuestionEntity questionEntity) {
-        log.info("Mapping QuestionRequestDTO to existing QuestionEntity for update: {}", requestDTO);
+        log.info("Mapping question update for id: {}", questionEntity.getId());
         questionMapper.toEntityUpdate(requestDTO, subject, questionEntity);
     }
 }

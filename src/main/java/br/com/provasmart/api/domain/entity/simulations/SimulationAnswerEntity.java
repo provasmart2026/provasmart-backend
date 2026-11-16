@@ -33,4 +33,7 @@ public class SimulationAnswerEntity {
 
     @Column(name = "answered_at", nullable = false)
     private LocalDateTime answeredAt;
+
+    @Column(name = "is_correct")
+    private Boolean isCorrect;
 }

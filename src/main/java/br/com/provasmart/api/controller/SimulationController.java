@@ -1,14 +1,23 @@
 package br.com.provasmart.api.controller;
 
 import br.com.provasmart.api.dto.request.simulation.SimulationAnswerRequestDTO;
+import br.com.provasmart.api.dto.response.simulation.SimulationQuestionCorrectionResponseDTO;
 import br.com.provasmart.api.dto.response.simulation.SimulationResponseDTO;
+import br.com.provasmart.api.dto.response.simulation.SimulationSummaryResponseDTO;
 import br.com.provasmart.api.service.ISimulationService;
+import br.com.provasmart.api.dto.response.simulation.performance.SimulationPerformanceResponseDTO;
+import br.com.provasmart.api.service.ISimulationPerformanceService;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -17,6 +26,14 @@ import java.util.UUID;
 public class SimulationController {
 
     private final ISimulationService simulationService;
+    private final ISimulationPerformanceService simulationPerformanceService;
+
+    @GetMapping("/history")
+    @Operation(summary = "Consultar histórico paginado dos simulados finalizados e cancelados do estudante")
+    public ResponseEntity<Page<SimulationSummaryResponseDTO>> findHistory(@PageableDefault(size = 10) Pageable pageable) {
+        var history = simulationService.findHistory(pageable);
+        return ResponseEntity.ok(history);
+    }
 
     @PostMapping
     public ResponseEntity<SimulationResponseDTO> create() {
@@ -25,10 +42,34 @@ public class SimulationController {
         return ResponseEntity.created(location).body(simulation);
     }
 
+    @GetMapping("/current")
+    public ResponseEntity<SimulationResponseDTO> findCurrent() {
+        return simulationService.findCurrent()
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.noContent().build());
+    }
+
+    @GetMapping("/latest-finished")
+    public ResponseEntity<SimulationResponseDTO> findLatestFinished() {
+        return ResponseEntity.ok(simulationService.findLatestFinished());
+    }
+
     @GetMapping("/{simulationId}")
     public ResponseEntity<SimulationResponseDTO> findById(@PathVariable UUID simulationId) {
         var simulation = simulationService.findById(simulationId);
         return ResponseEntity.ok(simulation);
+    }
+
+    @GetMapping("/{simulationId}/performance")
+    public ResponseEntity<SimulationPerformanceResponseDTO> findPerformanceById(@PathVariable UUID simulationId) {
+        var performance = simulationPerformanceService.findById(simulationId);
+        return ResponseEntity.ok(performance);
+    }
+
+    @GetMapping("/{simulationId}/correction")
+    @Operation(summary = "Consultar a correção por questão de um simulado finalizado")
+    public ResponseEntity<List<SimulationQuestionCorrectionResponseDTO>> findCorrection(@PathVariable UUID simulationId) {
+        return ResponseEntity.ok(simulationService.findCorrection(simulationId));
     }
 
     @PutMapping("/{simulationId}/questions/{simulationQuestionId}/answer")
@@ -42,6 +83,12 @@ public class SimulationController {
     @PatchMapping("/{simulationId}/finish")
     public ResponseEntity<SimulationResponseDTO> finishSimulation(@PathVariable UUID simulationId) {
         var simulation = simulationService.finishSimulation(simulationId);
+        return ResponseEntity.ok(simulation);
+    }
+
+    @PatchMapping("/{simulationId}/cancel")
+    public ResponseEntity<SimulationResponseDTO> cancelSimulation(@PathVariable UUID simulationId) {
+        var simulation = simulationService.cancelSimulation(simulationId);
         return ResponseEntity.ok(simulation);
     }
 }
