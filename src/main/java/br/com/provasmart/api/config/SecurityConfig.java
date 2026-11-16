@@ -60,6 +60,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/users/{id}").hasRole(RoleEnum.ADMIN.name())
                         .requestMatchers(HttpMethod.PATCH, "/users/{id}/activate", "/users/{id}/deactivate")
                         .hasRole(RoleEnum.ADMIN.name())
+                        .requestMatchers("/question-reports", "/question-reports/**").hasRole(RoleEnum.ADMIN.name())
                         .requestMatchers("/questions/**").hasRole(RoleEnum.ADMIN.name())
                         .requestMatchers("/simulations/**").hasRole(RoleEnum.ESTUDANTE.name())
                         .requestMatchers("/study-plans/**").hasRole(RoleEnum.ESTUDANTE.name())
