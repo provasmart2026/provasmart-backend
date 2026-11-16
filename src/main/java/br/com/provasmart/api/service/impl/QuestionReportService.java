@@ -49,8 +49,9 @@ public class QuestionReportService implements IQuestionReportService {
         var student = currentStudentForUpdate();
         var simulation = simulationRepository.findByIdAndStudentIdForUpdate(simulationId, student.getId())
                 .orElseThrow(() -> new NotFoundException("Simulado não encontrado."));
-        if (simulation.getStatus() != SimulationStatusEnum.EM_ANDAMENTO) {
-            throw new ConflictException("Só é possível reportar questões de um simulado em andamento.");
+        if (simulation.getStatus() != SimulationStatusEnum.EM_ANDAMENTO
+                && simulation.getStatus() != SimulationStatusEnum.FINALIZADO) {
+            throw new ConflictException("Só é possível reportar questões de um simulado em andamento ou finalizado.");
         }
         var question = simulation.getQuestions().stream()
                 .filter(item -> item.getId().equals(simulationQuestionId)).findFirst()
@@ -72,8 +73,9 @@ public class QuestionReportService implements IQuestionReportService {
         var student = currentStudentForUpdate();
         var practice = practiceRepository.findByIdAndStudent_Id(practiceId, student.getId())
                 .orElseThrow(() -> new NotFoundException("Prática direcionada não encontrada."));
-        if (practice.getStatus() != DirectedPracticeStatus.EM_ANDAMENTO) {
-            throw new ConflictException("Só é possível reportar questões de uma prática em andamento.");
+        if (practice.getStatus() != DirectedPracticeStatus.EM_ANDAMENTO
+                && practice.getStatus() != DirectedPracticeStatus.FINALIZADA) {
+            throw new ConflictException("Só é possível reportar questões de uma prática em andamento ou finalizada.");
         }
         var question = practice.getQuestions().stream()
                 .filter(item -> item.getId().equals(practiceQuestionId)).findFirst()

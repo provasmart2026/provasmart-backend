@@ -24,6 +24,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mapstruct.factory.Mappers;
 import org.mockito.ArgumentCaptor;
@@ -60,11 +61,11 @@ class QuestionReportServiceTest {
             QuestionReportReasonEnum.ALTERNATIVAS_COM_PROBLEMA, "Alternativas duplicadas.");
 
     @ParameterizedTest
-    @ValueSource(booleans = {false, true})
-    void createsReportWithCorrectOriginAndPreservedContent(boolean practice) {
+    @CsvSource({"false,false", "false,true", "true,false", "true,true"})
+    void createsReportWithCorrectOriginAndPreservedContent(boolean practice, boolean completed) {
         var student = authenticate();
-        if (practice) allowPractice(DirectedPracticeStatus.EM_ANDAMENTO);
-        else allowSimulation(SimulationStatusEnum.EM_ANDAMENTO);
+        if (practice) allowPractice(completed ? DirectedPracticeStatus.FINALIZADA : DirectedPracticeStatus.EM_ANDAMENTO);
+        else allowSimulation(completed ? SimulationStatusEnum.FINALIZADO : SimulationStatusEnum.EM_ANDAMENTO);
         var reportId = UUID.randomUUID();
         when(reportRepository.save(any())).thenAnswer(invocation -> {
             QuestionReportEntity report = invocation.getArgument(0);
@@ -101,8 +102,8 @@ class QuestionReportServiceTest {
     }
 
     @ParameterizedTest
-    @EnumSource(value = SimulationStatusEnum.class, names = {"FINALIZADO", "CANCELADO"})
-    void rejectsClosedSimulation(SimulationStatusEnum status) {
+    @EnumSource(value = SimulationStatusEnum.class, names = {"CANCELADO"})
+    void rejectsCancelledSimulation(SimulationStatusEnum status) {
         authenticate();
         allowSimulation(status);
         assertThrows(ConflictException.class, () -> service.reportSimulationQuestion(activityId, questionId, request));
@@ -110,8 +111,8 @@ class QuestionReportServiceTest {
     }
 
     @ParameterizedTest
-    @EnumSource(value = DirectedPracticeStatus.class, names = {"FINALIZADA", "CANCELADA"})
-    void rejectsClosedPractice(DirectedPracticeStatus status) {
+    @EnumSource(value = DirectedPracticeStatus.class, names = {"CANCELADA"})
+    void rejectsCancelledPractice(DirectedPracticeStatus status) {
         authenticate();
         allowPractice(status);
         assertThrows(ConflictException.class, () -> service.reportPracticeQuestion(activityId, questionId, request));
@@ -133,30 +134,30 @@ class QuestionReportServiceTest {
     }
 
     @ParameterizedTest
-    @ValueSource(booleans = {false, true})
-    void rejectsQuestionOutsideTheActivity(boolean practice) {
+    @CsvSource({"false,false", "false,true", "true,false", "true,true"})
+    void rejectsQuestionOutsideTheActivity(boolean practice, boolean completed) {
         authenticate();
         if (practice) {
-            allowPractice(DirectedPracticeStatus.EM_ANDAMENTO);
+            allowPractice(completed ? DirectedPracticeStatus.FINALIZADA : DirectedPracticeStatus.EM_ANDAMENTO);
             assertThrows(BadRequestException.class, () -> service.reportPracticeQuestion(activityId, UUID.randomUUID(), request));
         } else {
-            allowSimulation(SimulationStatusEnum.EM_ANDAMENTO);
+            allowSimulation(completed ? SimulationStatusEnum.FINALIZADO : SimulationStatusEnum.EM_ANDAMENTO);
             assertThrows(BadRequestException.class, () -> service.reportSimulationQuestion(activityId, UUID.randomUUID(), request));
         }
         verifyNoInteractions(reportRepository);
     }
 
     @ParameterizedTest
-    @ValueSource(booleans = {false, true})
-    void rejectsPendingReportForOriginalQuestionRegardlessOfOrigin(boolean practice) {
+    @CsvSource({"false,false", "false,true", "true,false", "true,true"})
+    void rejectsPendingReportForOriginalQuestionRegardlessOfOrigin(boolean practice, boolean completed) {
         authenticate();
         when(reportRepository.existsByStudent_IdAndOriginalQuestionIdAndStatus(studentId, originalId, QuestionReportStatusEnum.PENDENTE))
                 .thenReturn(true);
         if (practice) {
-            allowPractice(DirectedPracticeStatus.EM_ANDAMENTO);
+            allowPractice(completed ? DirectedPracticeStatus.FINALIZADA : DirectedPracticeStatus.EM_ANDAMENTO);
             assertThrows(ConflictException.class, () -> service.reportPracticeQuestion(activityId, questionId, request));
         } else {
-            allowSimulation(SimulationStatusEnum.EM_ANDAMENTO);
+            allowSimulation(completed ? SimulationStatusEnum.FINALIZADO : SimulationStatusEnum.EM_ANDAMENTO);
             assertThrows(ConflictException.class, () -> service.reportSimulationQuestion(activityId, questionId, request));
         }
         verify(reportRepository, never()).save(any());
