@@ -17,6 +17,8 @@ public interface IQuestionReportService {
             QuestionReportStatusEnum status,
             Pageable pageable);
 
+    long countPendingReports();
+
     QuestionReportDetailResponseDTO findReportById(UUID id);
 
     QuestionReportDetailResponseDTO updateStatus(UUID id, QuestionReportStatusRequestDTO request);

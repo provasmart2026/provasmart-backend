@@ -104,6 +104,13 @@ public class QuestionReportService implements IQuestionReportService {
 
     @Override
     @Transactional(readOnly = true)
+    public long countPendingReports() {
+        log.info("Counting pending question reports");
+        return reportRepository.countByStatus(QuestionReportStatusEnum.PENDENTE);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public QuestionReportDetailResponseDTO findReportById(UUID id) {
         log.info("Fetching question report with ID {}", id);
 
@@ -208,13 +215,16 @@ public class QuestionReportService implements IQuestionReportService {
     }
 
     private UserEntity currentStudentForUpdate() {
+        log.info("Fetching student for update");
         return userRepository.findByIdForUpdate(currentActorService.getCurrentUserId())
                 .orElseThrow(() -> new NotFoundException("Estudante não encontrado."));
     }
 
     private void validateNoPendingReport(UUID studentId, UUID originalQuestionId) {
+        log.info("Checking for a pending report for question {}", originalQuestionId);
         if (reportRepository.existsByStudent_IdAndOriginalQuestionIdAndStatus(
                 studentId, originalQuestionId, QuestionReportStatusEnum.PENDENTE)) {
+            log.warn("Question report rejected because a pending report already exists for question {}", originalQuestionId);
             throw new ConflictException("Você já possui um reporte pendente para esta questão.");
         }
     }

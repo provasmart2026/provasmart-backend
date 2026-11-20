@@ -25,6 +25,8 @@ public interface IQuestionReportRepository extends JpaRepository<QuestionReportE
     @EntityGraph(attributePaths = "student")
     Page<QuestionReportEntity> findByStatusOrderByCreatedAtDesc(QuestionReportStatusEnum status, Pageable pageable);
 
+    long countByStatus(QuestionReportStatusEnum status);
+
     boolean existsByStudent_IdAndOriginalQuestionIdAndStatus(
             UUID studentId, UUID originalQuestionId, QuestionReportStatusEnum status);
 }
