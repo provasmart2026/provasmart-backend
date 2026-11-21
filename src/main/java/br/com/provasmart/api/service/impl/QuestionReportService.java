@@ -20,6 +20,7 @@ import br.com.provasmart.api.exception.ConflictException;
 import br.com.provasmart.api.exception.NotFoundException;
 import br.com.provasmart.api.mapper.report.IQuestionReportMapper;
 import br.com.provasmart.api.repository.practice.IDirectedPracticeRepository;
+import br.com.provasmart.api.repository.questions.IQuestionRepository;
 import br.com.provasmart.api.repository.reports.IQuestionReportRepository;
 import br.com.provasmart.api.repository.simulations.ISimulationRepository;
 import br.com.provasmart.api.repository.users.IUserRepository;
@@ -42,11 +43,14 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Slf4j
 public class QuestionReportService implements IQuestionReportService {
+    private static final int REPORT_REVIEW = 10;
+
     private final ICurrentActorService currentActorService;
     private final IUserRepository userRepository;
     private final ISimulationRepository simulationRepository;
     private final IDirectedPracticeRepository practiceRepository;
     private final IQuestionReportRepository reportRepository;
+    private final IQuestionRepository questionRepository;
     private final IQuestionReportMapper reportMapper;
     private final ObjectMapper objectMapper;
 
@@ -62,11 +66,11 @@ public class QuestionReportService implements IQuestionReportService {
 
         var question = findSimulationQuestion(simulation, simulationQuestionId);
         var originalQuestion = question.getQuestion();
-        validateNoPendingReport(student.getId(), originalQuestion.getId());
+        validateCanReport(student.getId(), originalQuestion.getId());
 
         var snapshot = buildSimulationQuestionSnapshot(originalQuestion);
         var report = reportMapper.toSimulationEntity(request, student, question, snapshot);
-        return reportMapper.toResponseDTO(reportRepository.save(report));
+        return saveReport(report);
     }
 
     @Override
@@ -80,11 +84,11 @@ public class QuestionReportService implements IQuestionReportService {
         validatePracticeReportable(practice);
 
         var question = findPracticeQuestion(practice, practiceQuestionId);
-        validateNoPendingReport(student.getId(), question.getOriginalQuestionId());
+        validateCanReport(student.getId(), question.getOriginalQuestionId());
 
         var snapshot = buildPracticeQuestionSnapshot(question);
         var report = reportMapper.toPracticeEntity(request, student, question, snapshot);
-        return reportMapper.toResponseDTO(reportRepository.save(report));
+        return saveReport(report);
     }
 
     @Override
@@ -107,6 +111,16 @@ public class QuestionReportService implements IQuestionReportService {
     public long countPendingReports() {
         log.info("Counting pending question reports");
         return reportRepository.countByStatus(QuestionReportStatusEnum.PENDENTE);
+    }
+
+    @Override
+    public void validateReactivationAllowed(UUID questionId) {
+        var pendingStudents = countPendingReporters(questionId);
+        if (pendingStudents >= REPORT_REVIEW) {
+            log.warn("Question {} cannot be reactivated with {} pending reporters", questionId, pendingStudents);
+            throw new ConflictException("Resolva ou descarte reportes até que a questão tenha menos de "
+                    + REPORT_REVIEW + " pendências para reativá-la.");
+        }
     }
 
     @Override
@@ -218,6 +232,36 @@ public class QuestionReportService implements IQuestionReportService {
         log.info("Fetching student for update");
         return userRepository.findByIdForUpdate(currentActorService.getCurrentUserId())
                 .orElseThrow(() -> new NotFoundException("Estudante não encontrado."));
+    }
+
+    private void validateCanReport(UUID studentId, UUID questionId) {
+        var underReview = questionRepository.findReportReviewStatusForUpdate(questionId)
+                .orElseThrow(() -> new NotFoundException("Questão original não encontrada."));
+
+        if (underReview) {
+            log.info("Question report blocked while question {} is under review", questionId);
+            throw new ConflictException("Esta questão já recebeu reportes e está em análise pela equipe.");
+        }
+
+        validateNoPendingReport(studentId, questionId);
+    }
+
+    private QuestionReportResponseDTO saveReport(QuestionReportEntity report) {
+        var savedReport = reportRepository.saveAndFlush(report);
+        var questionId = savedReport.getOriginalQuestionId();
+        var pendingStudents = countPendingReporters(questionId);
+
+        if (pendingStudents >= REPORT_REVIEW) {
+            questionRepository.deactivateAndStartReportReview(questionId, LocalDateTime.now());
+            log.info("Question {} moved to report review after {} pending reporters", questionId, pendingStudents);
+        }
+
+        return reportMapper.toResponseDTO(savedReport);
+    }
+
+    private long countPendingReporters(UUID questionId) {
+        return reportRepository.countDistinctStudentsByQuestionAndStatus(
+                questionId, QuestionReportStatusEnum.PENDENTE);
     }
 
     private void validateNoPendingReport(UUID studentId, UUID originalQuestionId) {

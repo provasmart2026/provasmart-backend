@@ -19,6 +19,8 @@ public interface IQuestionReportService {
 
     long countPendingReports();
 
+    void validateReactivationAllowed(UUID questionId);
+
     QuestionReportDetailResponseDTO findReportById(UUID id);
 
     QuestionReportDetailResponseDTO updateStatus(UUID id, QuestionReportStatusRequestDTO request);

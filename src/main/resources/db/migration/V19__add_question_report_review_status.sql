@@ -1,0 +1,2 @@
+ALTER TABLE questions
+    ADD COLUMN under_report_review BOOLEAN NOT NULL DEFAULT FALSE;
