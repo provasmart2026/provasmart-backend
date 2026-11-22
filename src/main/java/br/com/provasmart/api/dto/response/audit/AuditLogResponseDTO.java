@@ -6,7 +6,8 @@ import java.util.UUID;
 public record AuditLogResponseDTO(
         UUID id,
         UUID actorId,
-        String actorEmail,
+        String actorName,
+        boolean hasEmail,
         String action,
         String resource,
         UUID resourceId,

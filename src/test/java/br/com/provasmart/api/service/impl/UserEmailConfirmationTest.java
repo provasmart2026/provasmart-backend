@@ -16,7 +16,7 @@ class UserEmailConfirmationTest {
     @Test
     void rejectsMismatchBeforeAccessingRepository() {
         var repository = mock(IUserRepository.class);
-        var service = new UserService(repository, null, null, null, null, null);
+        var service = new UserService(repository, null, null, null, null, null, null);
         var error = assertThrows(BadRequestException.class, () -> service.create(request("other@example.com")));
         assertEquals("Os e-mails não coincidem.", error.getMessage());
         verifyNoInteractions(repository);
@@ -26,7 +26,7 @@ class UserEmailConfirmationTest {
     void acceptsNormalizedMatchingEmail() {
         var repository = mock(IUserRepository.class);
         when(repository.existsByEmail("user@example.com")).thenThrow(new IllegalStateException("comparison passed"));
-        var service = new UserService(repository, null, null, null, null, null);
+        var service = new UserService(repository, null, null, null, null, null, null);
         assertThrows(IllegalStateException.class, () -> service.create(request(" USER@EXAMPLE.COM ")));
         verify(repository).existsByEmail("user@example.com");
     }

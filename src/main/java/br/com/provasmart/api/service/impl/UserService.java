@@ -5,6 +5,8 @@ import br.com.provasmart.api.domain.enums.RoleEnum;
 import br.com.provasmart.api.domain.enums.LegalDocumentTypeEnum;
 import br.com.provasmart.api.dto.request.user.UserRequestDTO;
 import br.com.provasmart.api.dto.request.user.UpdateUserNameRequestDTO;
+import br.com.provasmart.api.dto.response.user.UserAdminSummaryResponseDTO;
+import br.com.provasmart.api.dto.response.user.UserEmailResponseDTO;
 import br.com.provasmart.api.dto.response.user.UserResponseDTO;
 import br.com.provasmart.api.exception.BadRequestException;
 import br.com.provasmart.api.exception.ConflictException;
@@ -12,6 +14,7 @@ import br.com.provasmart.api.exception.NotFoundException;
 import br.com.provasmart.api.mapper.user.IUserMapper;
 import br.com.provasmart.api.repository.users.IUserRepository;
 import br.com.provasmart.api.repository.studyplans.IStudyPlanRepository;
+import br.com.provasmart.api.service.IAuditLogService;
 import br.com.provasmart.api.service.ICurrentActorService;
 import br.com.provasmart.api.service.IUserService;
 import br.com.provasmart.api.service.ILegalDocumentService;
@@ -40,6 +43,7 @@ public class UserService implements IUserService {
     private final ICurrentActorService currentActorService;
     private final IStudyPlanRepository studyPlanRepository;
     private final ILegalDocumentService legalDocumentService;
+    private final IAuditLogService auditLogService;
 
     @Override
     public UserResponseDTO create(UserRequestDTO userRequestDTO) {
@@ -68,21 +72,32 @@ public class UserService implements IUserService {
 
 
     @Override
-    public UserResponseDTO findById(UUID id) {
+    public UserAdminSummaryResponseDTO findById(UUID id) {
         log.info("Finding user with id: {}", id);
 
         var userEntity = findUserById(id);
 
-        return mapToDTO(userEntity);
+        return userMapper.toAdminSummaryDTO(userEntity);
     }
 
     @Override
-    public Page<UserResponseDTO> findAll(Pageable pageable) {
+    public UserEmailResponseDTO revealEmail(UUID id) {
+        var adminId = currentActorService.getCurrentUserId();
+        var user = findUserById(id);
+
+        auditLogService.record(adminId, null, "REVEAL_EMAIL", "USERS", id,
+                "GET", "/users/" + id + "/email", 200);
+
+        return new UserEmailResponseDTO(user.getEmail());
+    }
+
+    @Override
+    public Page<UserAdminSummaryResponseDTO> findAll(Pageable pageable) {
         log.info("Finding all users with pagination: page {}, size {}", pageable.getPageNumber(), pageable.getPageSize());
 
         var userEntities = userRepository.findAll(pageable);
 
-        return userEntities.map(this::mapToDTO);
+        return userEntities.map(userMapper::toAdminSummaryDTO);
     }
 
     @Override

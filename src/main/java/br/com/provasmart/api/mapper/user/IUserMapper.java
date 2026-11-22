@@ -3,6 +3,7 @@ package br.com.provasmart.api.mapper.user;
 import br.com.provasmart.api.domain.entity.users.UserEntity;
 import br.com.provasmart.api.domain.enums.RoleEnum;
 import br.com.provasmart.api.dto.request.user.UserRequestDTO;
+import br.com.provasmart.api.dto.response.user.UserAdminSummaryResponseDTO;
 import br.com.provasmart.api.dto.response.user.UserResponseDTO;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -28,4 +29,6 @@ public interface IUserMapper {
     UserEntity toEntity(UserRequestDTO userRequestDTO);
 
     UserResponseDTO toResponseDTO(UserEntity userEntity);
+
+    UserAdminSummaryResponseDTO toAdminSummaryDTO(UserEntity userEntity);
 }
