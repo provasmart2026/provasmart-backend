@@ -5,6 +5,7 @@ import br.com.provasmart.api.dto.request.report.QuestionReportStatusRequestDTO;
 import br.com.provasmart.api.dto.response.report.QuestionReportResponseDTO;
 import br.com.provasmart.api.dto.response.report.QuestionReportSummaryResponseDTO;
 import br.com.provasmart.api.dto.response.report.QuestionReportDetailResponseDTO;
+import br.com.provasmart.api.dto.response.report.QuestionReportPendingCountResponseDTO;
 import br.com.provasmart.api.service.IQuestionReportService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -40,6 +41,12 @@ public class QuestionReportController {
             @RequestParam(required = false) QuestionReportStatusEnum status,
             @PageableDefault(size = 10) Pageable pageable) {
         return ResponseEntity.ok(questionReportService.findReports(status, pageable));
+    }
+
+    @GetMapping("/question-reports/pending-count")
+    public ResponseEntity<QuestionReportPendingCountResponseDTO> countPendingReports() {
+        var count = questionReportService.countPendingReports();
+        return ResponseEntity.ok(new QuestionReportPendingCountResponseDTO(count));
     }
 
     @GetMapping("/question-reports/{id}")

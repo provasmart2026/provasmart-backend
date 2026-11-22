@@ -30,6 +30,8 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mapstruct.factory.Mappers;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 
 import java.util.Optional;
 import java.time.LocalDateTime;
@@ -126,6 +128,79 @@ class DirectedPracticeServiceTest {
     }
 
     @Test
+    void refusesToCreateAPracticeWhenDuplicateAndInvalidQuestionsLeaveFewerThanTwenty() {
+        var area = ExamAreaEnum.MATEMATICA;
+        var simulation = new SimulationEntity();
+        simulation.setId(UUID.randomUUID());
+        var student = new UserEntity();
+        student.setId(studentId);
+        List<QuestionEntity> pool = new ArrayList<>();
+        for (int i = 0; i < 19; i++) pool.add(question(area));
+        pool.add(pool.getFirst());
+        var invalid = question(area);
+        invalid.getAlternatives().forEach(alternative -> alternative.setCorrect(false));
+        pool.add(invalid);
+        when(actor.getCurrentUserId()).thenReturn(studentId);
+        when(users.findByIdForUpdate(studentId)).thenReturn(Optional.of(student));
+        when(simulations.findFirstByStudent_IdAndStatusOrderByFinishedAtDescIdDesc(
+                studentId, SimulationStatusEnum.FINALIZADO)).thenReturn(Optional.of(simulation));
+        when(performance.findById(simulation.getId())).thenReturn(new SimulationPerformanceResponseDTO(
+                simulation.getId(), null, List.of(area), List.of()));
+        when(questions.findAllByActiveTrueAndSubjectDisciplineExamArea(area)).thenReturn(pool);
+
+        var error = assertThrows(ConflictException.class, service::create);
+
+        assertEquals("Não há 20 questões ativas disponíveis para a área selecionada.", error.getMessage());
+        verify(practices, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void listsTheStudentsPracticesInTheOrderReturnedByTheRepository() {
+        var recent = practice(DirectedPracticeStatus.EM_ANDAMENTO);
+        var older = practice(DirectedPracticeStatus.FINALIZADA);
+        older.setStartedAt(recent.getStartedAt().minusDays(1));
+        when(actor.getCurrentUserId()).thenReturn(studentId);
+        when(practices.findByStudent_IdOrderByStartedAtDesc(studentId)).thenReturn(List.of(recent, older));
+
+        var result = service.list();
+
+        assertEquals(List.of(recent.getId(), older.getId()), result.stream().map(item -> item.id()).toList());
+        assertEquals(DirectedPracticeStatus.EM_ANDAMENTO, result.getFirst().status());
+        assertEquals(DirectedPracticeStatus.FINALIZADA, result.getLast().status());
+    }
+
+    @Test
+    void findsAPracticeOwnedByTheCurrentStudent() {
+        var practice = ownedPractice(DirectedPracticeStatus.EM_ANDAMENTO);
+        practice.getQuestions().add(reviewQuestion(1, true));
+
+        var result = service.findById(practice.getId());
+
+        assertEquals(practice.getId(), result.id());
+        assertEquals(practice.getArea(), result.area());
+        assertEquals(practice.getQuestions().getFirst().getId(), result.questions().getFirst().id());
+    }
+
+    @Test
+    void savesTheSelectedAlternativeAndTheAnswerTime() {
+        var practice = ownedPractice(DirectedPracticeStatus.EM_ANDAMENTO);
+        var question = reviewQuestion(1, true);
+        question.setSelectedAlternativeId(null);
+        question.setCorrectAtFinish(null);
+        practice.getQuestions().add(question);
+        var alternativeId = question.getAlternatives().getLast().getId();
+        when(practices.save(practice)).thenReturn(practice);
+
+        var result = service.answer(practice.getId(), question.getId(), alternativeId);
+
+        verify(practices).save(practice);
+        assertEquals(alternativeId, question.getSelectedAlternativeId());
+        assertEquals(alternativeId, result.questions().getFirst().selectedAlternativeId());
+        assertNotNull(question.getAnsweredAt());
+        assertNull(question.getCorrectAtFinish());
+    }
+
+    @Test
     void doesNotRevealAnalysisBeforeFinish() {
         var practice = ownedPractice(DirectedPracticeStatus.EM_ANDAMENTO);
         assertThrows(ConflictException.class, () -> service.analysis(practice.getId()));
@@ -154,11 +229,17 @@ class DirectedPracticeServiceTest {
     @Test
     void rejectsAnswerFromAnotherQuestion() {
         var practice = ownedPractice(DirectedPracticeStatus.EM_ANDAMENTO);
-        var question = new DirectedPracticeQuestionEntity();
-        question.setId(UUID.randomUUID());
+        var question = reviewQuestion(1, true);
+        question.setSelectedAlternativeId(null);
+        var otherQuestion = reviewQuestion(2, false);
         practice.getQuestions().add(question);
-        assertThrows(BadRequestException.class,
-                () -> service.answer(practice.getId(), question.getId(), UUID.randomUUID()));
+        practice.getQuestions().add(otherQuestion);
+
+        var error = assertThrows(BadRequestException.class, () -> service.answer(practice.getId(),
+                question.getId(), otherQuestion.getAlternatives().getFirst().getId()));
+
+        assertEquals("A alternativa não pertence a esta questão.", error.getMessage());
+        assertNull(question.getSelectedAlternativeId());
         verify(practices, never()).save(any());
     }
 
@@ -206,12 +287,53 @@ class DirectedPracticeServiceTest {
         verify(practices).findByIdAndStudent_Id(id, studentId);
     }
 
+    @Test
+    void historyPreservesPaginationAndShowsScoresOnlyForFinishedPractices() {
+        var finished = practice(DirectedPracticeStatus.FINALIZADA);
+        finished.getQuestions().addAll(List.of(reviewQuestion(1, true), reviewQuestion(2, false)));
+        var cancelled = practice(DirectedPracticeStatus.CANCELADA);
+        var unanswered = reviewQuestion(2, false);
+        unanswered.setSelectedAlternativeId(null);
+        cancelled.getQuestions().addAll(List.of(reviewQuestion(1, true), unanswered));
+        var pageable = PageRequest.of(1, 2);
+        when(actor.getCurrentUserId()).thenReturn(studentId);
+        when(practices.findByStudent_IdAndStatusInOrderByStartedAtDescIdDesc(
+                studentId, List.of(DirectedPracticeStatus.FINALIZADA, DirectedPracticeStatus.CANCELADA), pageable))
+                .thenReturn(new PageImpl<>(List.of(finished, cancelled), pageable, 4));
+
+        var result = service.findHistory(pageable);
+
+        assertEquals(1, result.getNumber());
+        assertEquals(4, result.getTotalElements());
+        var score = result.getContent().getFirst();
+        assertEquals(finished.getId(), score.id());
+        assertEquals(2, score.totalQuestions());
+        assertEquals(2, score.answeredQuestions());
+        assertEquals(1, score.correctAnswers());
+        assertEquals(1, score.incorrectAnswers());
+        assertEquals(50.0, score.accuracyPercentage());
+        var partial = result.getContent().getLast();
+        assertEquals(cancelled.getId(), partial.id());
+        assertEquals(2, partial.totalQuestions());
+        assertEquals(1, partial.answeredQuestions());
+        assertNull(partial.correctAnswers());
+        assertNull(partial.incorrectAnswers());
+        assertNull(partial.accuracyPercentage());
+    }
+
     private DirectedPracticeEntity ownedPractice(DirectedPracticeStatus status) {
+        var practice = practice(status);
+        when(actor.getCurrentUserId()).thenReturn(studentId);
+        when(practices.findByIdAndStudent_Id(practice.getId(), studentId)).thenReturn(Optional.of(practice));
+        return practice;
+    }
+
+    private DirectedPracticeEntity practice(DirectedPracticeStatus status) {
         var practice = new DirectedPracticeEntity();
         practice.setId(UUID.randomUUID());
         practice.setStatus(status);
-        when(actor.getCurrentUserId()).thenReturn(studentId);
-        when(practices.findByIdAndStudent_Id(practice.getId(), studentId)).thenReturn(Optional.of(practice));
+        practice.setArea(ExamAreaEnum.MATEMATICA);
+        practice.setStartedAt(LocalDateTime.of(2026, 11, 20, 12, 0));
         return practice;
     }
 

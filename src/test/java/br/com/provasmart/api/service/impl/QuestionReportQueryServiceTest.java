@@ -41,6 +41,38 @@ class QuestionReportQueryServiceTest {
     @InjectMocks private QuestionReportService service;
 
     @Test
+    void countsOnlyPendingReportsForTheAdmin() {
+        when(reportRepository.countByStatus(QuestionReportStatusEnum.PENDENTE)).thenReturn(12L);
+
+        assertEquals(12L, service.countPendingReports());
+
+        verify(reportRepository).countByStatus(QuestionReportStatusEnum.PENDENTE);
+        verifyNoMoreInteractions(reportRepository);
+    }
+
+    @Test
+    void allowsReactivationBelowThePendingReporterLimit() {
+        var questionId = UUID.randomUUID();
+        when(reportRepository.countDistinctStudentsByQuestionAndStatus(questionId, QuestionReportStatusEnum.PENDENTE))
+                .thenReturn(9L);
+
+        assertDoesNotThrow(() -> service.validateReactivationAllowed(questionId));
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {10, 11})
+    void blocksReactivationAtOrAboveThePendingReporterLimit(long pendingReporters) {
+        var questionId = UUID.randomUUID();
+        when(reportRepository.countDistinctStudentsByQuestionAndStatus(questionId, QuestionReportStatusEnum.PENDENTE))
+                .thenReturn(pendingReporters);
+
+        var error = assertThrows(ConflictException.class, () -> service.validateReactivationAllowed(questionId));
+
+        assertEquals("Resolva ou descarte reportes até que a questão tenha menos de 10 pendências para reativá-la.",
+                error.getMessage());
+    }
+
+    @Test
     void listsReportsWithoutStatusFilter() {
         var entity = report();
         var ordered = PageRequest.of(1, 10);

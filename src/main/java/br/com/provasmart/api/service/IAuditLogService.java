@@ -1,5 +1,6 @@
 package br.com.provasmart.api.service;
 
+import br.com.provasmart.api.dto.response.audit.AuditLogEmailResponseDTO;
 import br.com.provasmart.api.dto.response.audit.AuditLogResponseDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -12,4 +13,6 @@ public interface IAuditLogService {
                 String requestMethod, String endpoint, int statusCode);
 
     Page<AuditLogResponseDTO> findAll(Pageable pageable);
+
+    AuditLogEmailResponseDTO revealEmail(UUID id);
 }

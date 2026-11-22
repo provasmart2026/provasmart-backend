@@ -29,6 +29,9 @@ public class AuditLogEntity {
     @Column(name = "actor_id")
     private UUID actorId;
 
+    @Column(name = "actor_name", length = 150)
+    private String actorName;
+
     @Column(name = "actor_email", length = 255)
     private String actorEmail;
 

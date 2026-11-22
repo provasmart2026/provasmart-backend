@@ -10,6 +10,7 @@ import br.com.provasmart.api.exception.NotFoundException;
 import br.com.provasmart.api.mapper.question.IAlternativeMapper;
 import br.com.provasmart.api.mapper.question.IQuestionMapper;
 import br.com.provasmart.api.repository.questions.IQuestionRepository;
+import br.com.provasmart.api.service.IQuestionReportService;
 import br.com.provasmart.api.service.IQuestionService;
 import br.com.provasmart.api.service.ISubjectService;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,7 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Set;
@@ -29,6 +31,7 @@ import java.util.stream.Collectors;
 public class QuestionService implements IQuestionService {
 
     private final IQuestionRepository questionRepository;
+    private final IQuestionReportService questionReportService;
     private final ISubjectService subjectService;
     private final IQuestionMapper questionMapper;
     private final IAlternativeMapper alternativeMapper;
@@ -69,10 +72,17 @@ public class QuestionService implements IQuestionService {
     }
 
     @Override
+    @Transactional
     public void activate(UUID id) {
         log.info("Activating question with id: {}", id);
+
+        questionRepository.findReportReviewStatusForUpdate(id)
+                .orElseThrow(() -> new NotFoundException("Questão não encontrada."));
+        questionReportService.validateReactivationAllowed(id);
+
         var questionEntity = getQuestionEntity(id);
         questionEntity.setActive(true);
+        questionEntity.setUnderReportReview(false);
         questionEntity.setUpdatedAt(LocalDateTime.now());
         save(questionEntity);
     }
