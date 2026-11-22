@@ -2,6 +2,7 @@ package br.com.provasmart.api.service.impl;
 
 import br.com.provasmart.api.domain.entity.audit.AuditLogEntity;
 import br.com.provasmart.api.repository.audit.IAuditLogRepository;
+import br.com.provasmart.api.repository.users.IUserRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -22,6 +23,9 @@ class AuditLogServiceTest {
 
     @Mock
     private IAuditLogRepository auditLogRepository;
+
+    @Mock
+    private IUserRepository userRepository;
 
     @InjectMocks
     private AuditLogService auditLogService;

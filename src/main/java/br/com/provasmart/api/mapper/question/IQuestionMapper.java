@@ -15,6 +15,7 @@
         @Mapping(target = "id", ignore = true)
         @Mapping(target = "subject", source = "subjectEntity")
         @Mapping(target = "active", expression = "java(true)")
+        @Mapping(target = "underReportReview", constant = "false")
         @Mapping(target = "createdAt", expression = "java(java.time.LocalDateTime.now())")
         @Mapping(target = "updatedAt", ignore = true)
         QuestionEntity toEntity(QuestionRequestDTO questionRequestDTO, SubjectEntity subjectEntity);
@@ -22,6 +23,7 @@
         @Mapping(target = "id", ignore = true)
         @Mapping(target = "subject", source = "subjectEntity")
         @Mapping(target = "active", ignore = true)
+        @Mapping(target = "underReportReview", ignore = true)
         @Mapping(target = "alternatives", ignore = true)
         @Mapping(target = "createdAt", ignore = true)
         @Mapping(target = "updatedAt", expression = "java(java.time.LocalDateTime.now())")

@@ -7,7 +7,6 @@ import br.com.provasmart.api.dto.response.simulation.SimulationSummaryResponseDT
 import br.com.provasmart.api.service.ISimulationService;
 import br.com.provasmart.api.dto.response.simulation.performance.SimulationPerformanceResponseDTO;
 import br.com.provasmart.api.service.ISimulationPerformanceService;
-import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -29,7 +28,6 @@ public class SimulationController {
     private final ISimulationPerformanceService simulationPerformanceService;
 
     @GetMapping("/history")
-    @Operation(summary = "Consultar histórico paginado dos simulados finalizados e cancelados do estudante")
     public ResponseEntity<Page<SimulationSummaryResponseDTO>> findHistory(@PageableDefault(size = 10) Pageable pageable) {
         var history = simulationService.findHistory(pageable);
         return ResponseEntity.ok(history);
@@ -67,7 +65,6 @@ public class SimulationController {
     }
 
     @GetMapping("/{simulationId}/correction")
-    @Operation(summary = "Consultar a correção por questão de um simulado finalizado")
     public ResponseEntity<List<SimulationQuestionCorrectionResponseDTO>> findCorrection(@PathVariable UUID simulationId) {
         return ResponseEntity.ok(simulationService.findCorrection(simulationId));
     }

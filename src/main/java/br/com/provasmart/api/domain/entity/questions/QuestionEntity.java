@@ -36,6 +36,9 @@ public class QuestionEntity {
     @Column(name = "active", nullable = false)
     private boolean active;
 
+    @Column(name = "under_report_review", nullable = false)
+    private boolean underReportReview;
+
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<AlternativeEntity> alternatives = new ArrayList<>();
 

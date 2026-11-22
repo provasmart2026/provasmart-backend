@@ -11,11 +11,13 @@ import br.com.provasmart.api.domain.entity.practice.DirectedPracticeAlternativeE
 import br.com.provasmart.api.domain.entity.reports.QuestionReportEntity;
 import br.com.provasmart.api.domain.enums.*;
 import br.com.provasmart.api.dto.request.report.QuestionReportRequestDTO;
+import br.com.provasmart.api.dto.response.report.QuestionReportResponseDTO;
 import br.com.provasmart.api.exception.BadRequestException;
 import br.com.provasmart.api.exception.ConflictException;
 import br.com.provasmart.api.exception.NotFoundException;
 import br.com.provasmart.api.mapper.report.IQuestionReportMapper;
 import br.com.provasmart.api.repository.practice.IDirectedPracticeRepository;
+import br.com.provasmart.api.repository.questions.IQuestionRepository;
 import br.com.provasmart.api.repository.reports.IQuestionReportRepository;
 import br.com.provasmart.api.repository.simulations.ISimulationRepository;
 import br.com.provasmart.api.repository.users.IUserRepository;
@@ -35,6 +37,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.json.JsonMapper;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -49,6 +52,7 @@ class QuestionReportServiceTest {
     @Mock private ISimulationRepository simulationRepository;
     @Mock private IDirectedPracticeRepository practiceRepository;
     @Mock private IQuestionReportRepository reportRepository;
+    @Mock private IQuestionRepository questionRepository;
     @Spy private IQuestionReportMapper reportMapper = Mappers.getMapper(IQuestionReportMapper.class);
     @Spy private ObjectMapper objectMapper = JsonMapper.builder().build();
     @InjectMocks private QuestionReportService service;
@@ -67,18 +71,19 @@ class QuestionReportServiceTest {
         if (practice) allowPractice(completed ? DirectedPracticeStatus.FINALIZADA : DirectedPracticeStatus.EM_ANDAMENTO);
         else allowSimulation(completed ? SimulationStatusEnum.FINALIZADO : SimulationStatusEnum.EM_ANDAMENTO);
         var reportId = UUID.randomUUID();
-        when(reportRepository.save(any())).thenAnswer(invocation -> {
+        when(questionRepository.findReportReviewStatusForUpdate(originalId)).thenReturn(Optional.of(false));
+        when(reportRepository.countDistinctStudentsByQuestionAndStatus(originalId, QuestionReportStatusEnum.PENDENTE))
+                .thenReturn(1L);
+        when(reportRepository.saveAndFlush(any())).thenAnswer(invocation -> {
             QuestionReportEntity report = invocation.getArgument(0);
             report.setId(reportId);
             return report;
         });
 
-        var result = practice
-                ? service.reportPracticeQuestion(activityId, questionId, request)
-                : service.reportSimulationQuestion(activityId, questionId, request);
+        var result = submitReport(practice);
 
         var captor = ArgumentCaptor.forClass(QuestionReportEntity.class);
-        verify(reportRepository).save(captor.capture());
+        verify(reportRepository).saveAndFlush(captor.capture());
         var saved = captor.getValue();
         assertSame(student, saved.getStudent());
         assertEquals(originalId, saved.getOriginalQuestionId());
@@ -99,6 +104,47 @@ class QuestionReportServiceTest {
         assertFalse(snapshot.has("explanation"));
         assertFalse(snapshot.get("alternatives").get(0).has("correct"));
         verify(reportRepository).existsByStudent_IdAndOriginalQuestionIdAndStatus(studentId, originalId, QuestionReportStatusEnum.PENDENTE);
+    }
+
+    @ParameterizedTest
+    @CsvSource({"false,9", "true,9", "false,10", "true,10"})
+    void startsReportReviewOnlyWhenPendingReportersReachTheLimit(boolean practice, long pendingReporters) {
+        authenticate();
+        allowInProgressActivity(practice);
+        when(questionRepository.findReportReviewStatusForUpdate(originalId)).thenReturn(Optional.of(false));
+        when(reportRepository.saveAndFlush(any(QuestionReportEntity.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        when(reportRepository.countDistinctStudentsByQuestionAndStatus(originalId, QuestionReportStatusEnum.PENDENTE))
+                .thenReturn(pendingReporters);
+
+        var result = submitReport(practice);
+
+        assertEquals(QuestionReportStatusEnum.PENDENTE, result.status());
+        var order = inOrder(questionRepository, reportRepository);
+        order.verify(questionRepository).findReportReviewStatusForUpdate(originalId);
+        order.verify(reportRepository).existsByStudent_IdAndOriginalQuestionIdAndStatus(
+                studentId, originalId, QuestionReportStatusEnum.PENDENTE);
+        order.verify(reportRepository).saveAndFlush(any(QuestionReportEntity.class));
+        order.verify(reportRepository).countDistinctStudentsByQuestionAndStatus(
+                originalId, QuestionReportStatusEnum.PENDENTE);
+        if (pendingReporters == 10) {
+            order.verify(questionRepository).deactivateAndStartReportReview(eq(originalId), any(LocalDateTime.class));
+        } else {
+            verify(questionRepository, never()).deactivateAndStartReportReview(any(), any());
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void rejectsNewReportsWhenTheOriginalQuestionIsUnderReview(boolean practice) {
+        authenticate();
+        allowInProgressActivity(practice);
+        when(questionRepository.findReportReviewStatusForUpdate(originalId)).thenReturn(Optional.of(true));
+
+        var error = assertThrows(ConflictException.class, () -> submitReport(practice));
+
+        assertEquals("Esta questão já recebeu reportes e está em análise pela equipe.", error.getMessage());
+        verifyNoInteractions(reportRepository, reportMapper, objectMapper);
     }
 
     @ParameterizedTest
@@ -151,6 +197,7 @@ class QuestionReportServiceTest {
     @CsvSource({"false,false", "false,true", "true,false", "true,true"})
     void rejectsPendingReportForOriginalQuestionRegardlessOfOrigin(boolean practice, boolean completed) {
         authenticate();
+        when(questionRepository.findReportReviewStatusForUpdate(originalId)).thenReturn(Optional.of(false));
         when(reportRepository.existsByStudent_IdAndOriginalQuestionIdAndStatus(studentId, originalId, QuestionReportStatusEnum.PENDENTE))
                 .thenReturn(true);
         if (practice) {
@@ -160,7 +207,7 @@ class QuestionReportServiceTest {
             allowSimulation(completed ? SimulationStatusEnum.FINALIZADO : SimulationStatusEnum.EM_ANDAMENTO);
             assertThrows(ConflictException.class, () -> service.reportSimulationQuestion(activityId, questionId, request));
         }
-        verify(reportRepository, never()).save(any());
+        verify(reportRepository, never()).saveAndFlush(any());
         verifyNoInteractions(reportMapper, objectMapper);
     }
 
@@ -190,6 +237,17 @@ class QuestionReportServiceTest {
         when(currentActorService.getCurrentUserId()).thenReturn(studentId);
         when(userRepository.findByIdForUpdate(studentId)).thenReturn(Optional.of(student));
         return student;
+    }
+
+    private void allowInProgressActivity(boolean practice) {
+        if (practice) allowPractice(DirectedPracticeStatus.EM_ANDAMENTO);
+        else allowSimulation(SimulationStatusEnum.EM_ANDAMENTO);
+    }
+
+    private QuestionReportResponseDTO submitReport(boolean practice) {
+        return practice
+                ? service.reportPracticeQuestion(activityId, questionId, request)
+                : service.reportSimulationQuestion(activityId, questionId, request);
     }
 
     private void allowSimulation(SimulationStatusEnum status) {
